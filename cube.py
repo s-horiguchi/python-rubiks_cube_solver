@@ -38,11 +38,16 @@ class Piece(object):
     def get_color(self, face):
         # face: 欲しい面の定数
         #print self
-        return COLOR[self.color[face]]
+        try:
+            return COLOR[self.color[face]]
+        except TypeError:
+            print self
+            raise
     
 class Cube(object):
-    def __init__(self, is_scrambled=False):
+    def __init__(self, is_scrambled=False, debug=True):
         self.pieces = [Piece(i) for i in range(26)]
+        self.debug = debug
         if is_scrambled:
             self.scramble()
 
@@ -52,7 +57,8 @@ class Cube(object):
         batch = ""
         for i in xrange(nmoves):
             batch += random.choice(ROTATE_WAYS)
-        self.run(batch)
+        if self.debug: print "[*] batch =", batch
+        self.run(batch, False)
         return
         
     def R(self):
@@ -90,8 +96,8 @@ class Cube(object):
         self.pieces[L_RF] = org[L_RB].rotate(Right).rotate(Right)
         self.pieces[L_DRF] = org[L_URB].rotate(Right).rotate(Right)
         self.pieces[L_DR] = org[L_UR].rotate(Right).rotate(Right)
-        self.pieces[L_DRB] = org[K_URF].rotate(Right).rotate(Right)
-        self.pieces[L_RB] = org[RF].rotate(Right).rotate(Right)
+        self.pieces[L_DRB] = org[L_URF].rotate(Right).rotate(Right)
+        self.pieces[L_RB] = org[L_RF].rotate(Right).rotate(Right)
         return
     
     def L(self):
@@ -104,7 +110,7 @@ class Cube(object):
         self.pieces[L_DLF] = org[L_DLB].rotate(Left)
         self.pieces[L_DL] = org[L_LB].rotate(Left)
         self.pieces[L_DLB] = org[L_ULB].rotate(Left)
-        self.pieces[L_LB] = org[L_UB].rotate(Left)
+        self.pieces[L_LB] = org[L_UL].rotate(Left)
         return
 
     def L_(self):
@@ -113,7 +119,7 @@ class Cube(object):
         self.pieces[L_ULB] = org[L_DLB].rotate(Right)
         self.pieces[L_UL] = org[L_LB].rotate(Right)
         self.pieces[L_ULF] = org[L_ULB].rotate(Right)
-        self.pieces[L_LF] = org[L_UB].rotate(Right)
+        self.pieces[L_LF] = org[L_UL].rotate(Right)
         self.pieces[L_DLF] = org[L_ULF].rotate(Right)
         self.pieces[L_DL] = org[L_LF].rotate(Right)
         self.pieces[L_DLB] = org[L_DLF].rotate(Right)
@@ -362,8 +368,9 @@ class Cube(object):
             print colors[6:9]
         return
 
-    def run(self, batch):
+    def run(self, batch, confirm=False):
         # batch: 回転記号の文字列
+        print "[*]", batch
         que = []
         for b in batch:
             #print b
@@ -381,17 +388,41 @@ class Cube(object):
                     que[-1] = getattr(self, que[-1].__name__+"2")
                 else:
                     print "[*] "
-                    raise SntaxError, "The sign before \"2\" must be 'R','L','U','D','F',or 'B'."
+                    raise SyntaxError, "The sign before \"2\" must be 'R','L','U','D','F',or 'B'."
         for q in que:
             q()
-            self.show_faces()
-            raw_input() #
+            if self.debug: self.show_faces()
+            if confirm:
+                raw_input() #
         return
                 
     
 if __name__ == "__main__":
-    import sys
-    c = Cube()
-    c.show_faces()
-    c.run(sys.argv[1])
-    c.show_faces()
+    from optparse import OptionParser
+
+    parser = OptionParser("Usage: %prog [options] arg")
+    parser.add_option("-d", "--debug", dest="debug",
+                      action="store_true", default=False,
+                      help="show a look while moving")
+    parser.add_option("-s", "--scramble", dest="scramble",
+                      action="store_true", default=False,
+                      help="scramble before moving")
+    parser.add_option("-b", "--batch", dest="batch",
+                      default=None, help="run a batch of move notation")
+    parser.add_option("-c", "--confirm", dest="confirm",
+                      action="store_true", default=False,
+                      help="confirm each steps")
+    (options, args) = parser.parse_args()
+
+    if (options.scramble == False) and (options.batch == None):
+        parser.print_help()
+    else:
+        c = Cube(debug=options.debug)
+        c.show_faces()
+        if options.scramble:
+            c.scramble()
+        if options.batch:
+            c.run(options.batch, options.confirm)
+        c.show_faces()
+
+
