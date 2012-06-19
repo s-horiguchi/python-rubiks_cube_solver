@@ -1,3 +1,4 @@
+
 python-rubiks\_cube\_solver
 ====
 
@@ -24,6 +25,19 @@ python-rubiks\_cube\_solver
       -b BATCH, --batch=BATCH  
                             run a batch of move notation  
       -c, --confirm         confirm each steps  
+      -g, --game            set gaming mode on  
+
+ * -s, --scramble
+   * スクランブル（ごちゃまぜに）します。公式ルールに従い、デフォルトで25手分スクランブルします。
+ * -b BATCH, --batch=BATCH
+   * BATCHに回転記号を指定してその通り回します。
+ * -c, --confirm
+   * このオプションが指定されると、回転するたびにEnterが押されるまで待ちます。
+ * -g, --game
+   * 対話形式で入力された回転記号通り回します。confirmオプションに関わらず回すたびに状態を確認できます。
+
+scramble -> batch -> game  
+の順に処理が進むので、scrambleとgameを指定して遊ぶなんてこともできるかと。
 
 ### solver.py ###
 database.sqliteにどう動かしたらこうなるというデータをためておいて、このスクリプトはデータベースから適切な手順を組み合わせて全面揃える。SQLAlchemy使用。
