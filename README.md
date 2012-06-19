@@ -1,4 +1,3 @@
-
 python-rubiks\_cube\_solver
 ====
 
@@ -47,7 +46,7 @@ database.sqliteにどう動かしたらこうなるというデータをため�
     class Position(Base):
         __tablename__ = "positions"
         # solutions を作るたびにこっちも全パターン(確定していないところはすべての組み合わせ)作る 
-	#かぶってるPositionは再利用
+        #かぶってるPositionは再利用
         id = Column(Integer, primary_key=True)
         position = Column(String(500), nullable=False) # get_str_positionで取得する値にUNDEFINEDが加わる。get_str_position()は長さ481で固定っぽい
     
