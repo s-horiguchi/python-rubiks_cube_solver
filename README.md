@@ -13,6 +13,7 @@ python-rubiks\_cube\_solver
    - キューブのデータベース上の最適解探索スクリプト
 
 からなる。
+回転記号を使っているので[ここ](http://www.planet-puzzle.com/cubekaiten.html)を参照してください。
 
 ### cube.py ###
     > python cube.py -h
