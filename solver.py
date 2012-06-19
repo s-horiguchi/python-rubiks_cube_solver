@@ -24,7 +24,8 @@ class Solution(Base):
 
 class Position(Base):
     __tablename__ = "positions"
-    # solutions を作るたびにこっちも全パターン(向き違いと色違いだけ)作る(before/after両方)
+    # solutions を作るたびにこっちも全パターン(確定していないところはすべての組み合わせ)作る 
+    #かぶってるPositionは再利用
     id = Column(Integer, primary_key=True)
     position = Column(String(500), nullable=False) # get_str_positionで取得する値にUNDEFINEDが加わる。get_str_position()は長さ481で固定っぽい
 

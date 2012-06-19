@@ -13,7 +13,11 @@
 #                     |   |   |   | /
 #                     |___|___|___|/ 
 
-# colors
+# face sign
+NONE = -1 # キューブの表面に出ない面
+UNDEFINED = -2 # 未確定　動かしても良い for solver
+#DEFINED = -3 # 確定済み　動かしてはいけない for solver
+# face color
 RED = 0   #B
 ORANGE = 1    #R
 WHITE = 2 #Y
@@ -25,38 +29,39 @@ COLOR = ["R", "O", "W", "B", "G", "Y"]
 Right = 0
 Left = 1
 Up = 2
-Bottom = 3
+#Bottom = 3
+Down = 3
 Front = 4
 Back =5
-FACE = ["Right", "Left", "Up", "Bottom", "Front", "Back"]
+FACE = ["Right", "Left", "Up", "Down", "Front", "Back"]
 
 PIECES = [
-    [None, ORANGE, WHITE, None, None, YELLOW], # WOY
-    [None, None, WHITE, None, None, YELLOW], # WY
-    [RED, None, WHITE, None, None, YELLOW], # WRY
-    [None, ORANGE, WHITE, None, None, None], # WO
-    [None, None, WHITE, None, None, None], # W
-    [RED, None, WHITE, None, None, None], # WR
-    [None, ORANGE, WHITE, None, GREEN, None], # WOG
-    [None, None, WHITE, None, GREEN, None], # WG
-    [RED, None, WHITE, None, GREEN, None], # WRG
-    [None, ORANGE, None, None, None, YELLOW], # OY
-    [None, None, None, None, None, YELLOW], # Y
-    [RED, None, None, None, None, YELLOW], # RY
-    [None, ORANGE, None, None, None, None], # O
-    [RED, None, None, None, None, None], # R
-    [None, ORANGE, None, None, GREEN, None], # OG
-    [None, None, None, None, GREEN, None], # G
-    [RED, None, None, None, GREEN, None], # RG
-    [None, ORANGE, None, BLUE, None, YELLOW], # BOY
-    [None, None, None, BLUE, None, YELLOW], # BY
-    [RED, None, None, BLUE, None, YELLOW], # BRY
-    [None, ORANGE, None, BLUE, None, None], # BO
-    [None, None, None, BLUE, None, None], # B
-    [RED, None, None, BLUE, None, None], # BR
-    [None, ORANGE, None, BLUE, GREEN, None], # BOG
-    [None, None, None, BLUE, GREEN, None], # BG
-    [RED, None, None, BLUE, GREEN, None], # BRG
+    [NONE, ORANGE, WHITE, NONE, NONE, YELLOW], # WOY
+    [NONE, NONE, WHITE, NONE, NONE, YELLOW], # WY
+    [RED, NONE, WHITE, NONE, NONE, YELLOW], # WRY
+    [NONE, ORANGE, WHITE, NONE, NONE, NONE], # WO
+    [NONE, NONE, WHITE, NONE, NONE, NONE], # W
+    [RED, NONE, WHITE, NONE, NONE, NONE], # WR
+    [NONE, ORANGE, WHITE, NONE, GREEN, NONE], # WOG
+    [NONE, NONE, WHITE, NONE, GREEN, NONE], # WG
+    [RED, NONE, WHITE, NONE, GREEN, NONE], # WRG
+    [NONE, ORANGE, NONE, NONE, NONE, YELLOW], # OY
+    [NONE, NONE, NONE, NONE, NONE, YELLOW], # Y
+    [RED, NONE, NONE, NONE, NONE, YELLOW], # RY
+    [NONE, ORANGE, NONE, NONE, NONE, NONE], # O
+    [RED, NONE, NONE, NONE, NONE, NONE], # R
+    [NONE, ORANGE, NONE, NONE, GREEN, NONE], # OG
+    [NONE, NONE, NONE, NONE, GREEN, NONE], # G
+    [RED, NONE, NONE, NONE, GREEN, NONE], # RG
+    [NONE, ORANGE, NONE, BLUE, NONE, YELLOW], # BOY
+    [NONE, NONE, NONE, BLUE, NONE, YELLOW], # BY
+    [RED, NONE, NONE, BLUE, NONE, YELLOW], # BRY
+    [NONE, ORANGE, NONE, BLUE, NONE, NONE], # BO
+    [NONE, NONE, NONE, BLUE, NONE, NONE], # B
+    [RED, NONE, NONE, BLUE, NONE, NONE], # BR
+    [NONE, ORANGE, NONE, BLUE, GREEN, NONE], # BOG
+    [NONE, NONE, NONE, BLUE, GREEN, NONE], # BG
+    [RED, NONE, NONE, BLUE, GREEN, NONE], # BRG
     ]
 
 L_ULB = 0
@@ -88,5 +93,5 @@ L_DRF = 25
 
 NUM_SCRAMBLE_MOVES = 25
 
-ROTATE_WAYS = ["R", "R'", "R2", "L", "L'", "L2", "U", "U'", "U2", "D", "D'", "D2", "F", "F'", "F2", "B", "B'", "B2"]
-#ROTATE_WAYS = ["R", "R'", "L", "L'", "U", "U'", "D", "D'", "F", "F'", "B", "B'"]
+ROTATE_WAYS = ["R", "R'", "R2", "L", "L'", "L2", "U", "U'", "U2", "D", "D'", "D2", "F", "F'", "F2", "B", "B'", "B2", "M", "M'", "M2"]
+SINGLE_ROTATE_WAYS = ["R", "L", "U", "D", "F", "B", "M"]
