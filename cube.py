@@ -41,22 +41,44 @@ class Piece(object):
         # face: 欲しい面の定数
         #print self
         assert self.color[face] != NONE, "specified face is NONE"
-        return COLOR[self.color[face]]
+        return self.color[face]
 
-    def export(self):
-        yield self.num
+    def export(self, center_colors):
+        color = [center_colors.index(c) for c in self.color if c != NONE]
+        try:
+            yield PIECES_without_NONE.index(sorted(color))
+        except ValueError:
+            raise
         for c in self.color:
-            yield c
-    
+            if c == NONE:
+                yield NONE
+            else:
+                yield center_colors.index(c)
+        
 class Cube(object):
-    def __init__(self, is_scrambled=False, debug=True, str_position=None):
+    def __init__(self, is_scrambled=False, debug=True, str_position=None, colors=None):
+        # don't set <is_scramble> and <colors> (preferred colors)
+        # don't set <str_position> and <colors> (preferred str_position)
         if not str_position:
-            self.pieces = [Piece(i) for i in range(26)]
-            if is_scrambled:
-                self.scramble()
+            if colors:
+                try:
+                    colors_list = [[COLOR.index(c) for c in f] for f in colors.split("|")]
+                except ValueError:
+                    print "[*] invalid colors data."
+                    raise
+                self.set_by_faces_color(colors_list)
+            else:
+                self.pieces = [Piece(i) for i in range(26)]
+                if is_scrambled:
+                    self.scramble()
         else:
-            self.pieces = [Pieces(int(p.split(",")[0]), [int(c) for c in p.split(",")[1:]]) for p in str_position.split("|")]
+            self.pieces = [Piece(int(p.split(",")[0]), [int(c) for c in p.split(",")[1:]]) for p in str_position.split("|")]
         self.debug = debug
+        self.center_colors = tuple([COLOR.index(f[4]) for f in self.show_faces(get_only=True)])
+        self.translation_map = TRANSLATION_MAP[self.center_colors]
+
+#    def get_standard_color_output(self):
+#        return [[self.center_colors.index(c) for c in f] for f in self.show_faces(get_only=True)]
 
     def scramble(self, nmoves=None):
         if not nmoves: nmoves = NUM_SCRAMBLE_MOVES
@@ -67,30 +89,39 @@ class Cube(object):
         if self.debug: print "[*] batch =", batch
         self.run(batch, False)
         return
-        
-    def get_center_color(self, face):
-        if face == Right:
-            return self.pieces[L_R].get_color(Right)
-        elif face == Left:
-            return self.pieces[L_L].get_color(Left)
-        elif face == Up:
-            return self.pieces[L_U].get_color(Up)
-        elif face == Down:
-            return self.pieces[L_D].get_color(Down)
-        elif face == Front:
-            return self.pieces[L_F].get_color(Front)
-        elif face == Back:
-            return self.pieces[L_B].get_color(Back)
-        
-    def get_face_by_center_color(self, color):
-        assert 0 <= color <= 5, "invalid color"
-        for f in xrange(6):
-            if self.get_center_color(f) == color:
-                return f
-        return
 
-    def get_str_position(self):
-        return "|".join([",".join([str(c) for c in p.export()]) for p in self.pieces])
+    def set_by_faces_color(self, colors, quiet=False):
+        # colors = [ <faces list> [ <colors list> RED, ...], ...]
+        self.pieces = []
+        for i in xrange(26):
+            #print [(COLOR[colors[f[0]][f[1]]], f) for f in LOCATION[i]]
+            look = [colors[f[0]][f[1]] for f in LOCATION[i]]
+            try:
+                pnum = PIECES_without_NONE.index(sorted(look))
+            except ValueError:
+                if not quiet:
+                    print "[*] specified faces color is invalid!"
+                    raise
+                else:
+                    return False
+            piece = [NONE]*6
+            for c,f in enumerate(LOCATION[i]):
+                piece[f[0]] = look[c]
+            self.pieces.append(Piece(num=pnum, color=piece))
+        return True
+        
+    def get_str_position(self, standard=False):
+        if standard:
+            center_colors = self.center_colors
+        else:
+            center_colors = (RED, ORANGE, WHITE, BLUE, GREEN, YELLOW)
+        return "|".join([",".join([str(c) for c in p.export(center_colors)]) for p in self.pieces])
+
+    def translate_batch(self, batch): # 回転した奴向け
+        new_batch = ""
+        for b in batch:
+            new_batch += self.translation_map[b]
+        return new_batch
 
     def R(self, quiet=False):
         if not quiet: print "<R>"
@@ -138,6 +169,13 @@ class Cube(object):
         self.M_(quiet=True)
         return
 
+    def r_(self, quiet=False):
+        if not quiet: print "<(r')>"
+        self.R_(quiet=True)
+        self.L(quiet=True)
+        self.M(quiet=True)
+        return
+    
     def L(self, quiet=False):
         if not quiet: print "<L>"
         org = self.pieces[:]
@@ -216,6 +254,20 @@ class Cube(object):
         self.pieces[L_UB] = org[L_UF].rotate(Up).rotate(Up)
         return
     
+    def u(self, quiet=False):
+        if not quiet: print "<(u)>"
+        self.U(quiet=True)
+        self.E_(quiet=True)
+        self.D_(quiet=True)
+        return
+
+    def u_(self, quiet=False):
+        if not quiet: print "<(u')>"
+        self.U_(quiet=True)
+        self.E(quiet=True)
+        self.D(quiet=True)
+        return
+        
     def D(self, quiet=False):
         if not quiet: print "<D>"
         org = self.pieces[:]
@@ -294,6 +346,20 @@ class Cube(object):
         self.pieces[L_UF] = org[L_DF].rotate(Front).rotate(Front)
         return
         
+    def f(self, quiet=False):
+        if not quiet: print "<(f)>"
+        self.F(quiet=True)
+        self.S(quiet=True)
+        self.B_(quiet=True)
+        return
+
+    def f_(self, quiet=False):
+        if not quiet: print "<(f')>"
+        self.F_(quiet=True)
+        self.S_(quiet=True)
+        self.B(quiet=True)
+        return
+
     def B(self, quiet=False):
         if not quiet: print "<B>"
         org = self.pieces[:]
@@ -372,6 +438,84 @@ class Cube(object):
         self.pieces[L_B] = org[L_F].rotate(Left).rotate(Left)
         return
         
+    def E(self, quiet=False):
+        if not quiet:print "<E>"
+        org = self.pieces[:]
+        self.pieces[L_LF] = org[L_LB].rotate(Down)
+        self.pieces[L_F] = org[L_L].rotate(Down)
+        self.pieces[L_RF] = org[L_LF].rotate(Down)
+        self.pieces[L_R] = org[L_F].rotate(Down)
+        self.pieces[L_RB] = org[L_RF].rotate(Down)
+        self.pieces[L_B] = org[L_R].rotate(Down)
+        self.pieces[L_LB] = org[L_RB].rotate(Down)
+        self.pieces[L_L] = org[L_B].rotate(Down)
+        return
+
+    def E_(self, quiet=False):
+        if not quiet:print "<E'>"
+        org = self.pieces[:]
+        self.pieces[L_LF] = org[L_RF].rotate(Up)
+        self.pieces[L_F] = org[L_R].rotate(Up)
+        self.pieces[L_RF] = org[L_RB].rotate(Up)
+        self.pieces[L_R] = org[L_B].rotate(Up)
+        self.pieces[L_RB] = org[L_LB].rotate(Up)
+        self.pieces[L_B] = org[L_K].rotate(Up)
+        self.pieces[L_LB] = org[L_LF].rotate(Up)
+        self.pieces[L_L] = org[L_F].rotate(Up)
+        return
+
+    def E2(self, quiet=False):
+        if not quiet:print "<E2>"
+        org = self.pieces[:]
+        self.pieces[L_LF] = org[L_RB].rotate(Down).rotate(Down)
+        self.pieces[L_F] = org[L_B].rotate(Down).rotate(Down)
+        self.pieces[L_RF] = org[L_LB].rotate(Down).rotate(Down)
+        self.pieces[L_R] = org[L_L].rotate(Down).rotate(Down)
+        self.pieces[L_RB] = org[L_LF].rotate(Down).rotate(Down)
+        self.pieces[L_B] = org[L_F].rotate(Down).rotate(Down)
+        self.pieces[L_LB] = org[L_RF].rotate(Down).rotate(Down)
+        self.pieces[L_L] = org[L_R].rotate(Down).rotate(Down)
+        return
+
+    def S(self, quiet=False):
+        if not quiet: print "<S>"
+        org = self.pieces[:]
+        self.pieces[L_UR] = org[L_UL].rotate(Front)
+        self.pieces[L_R] = org[L_U].rotate(Front)
+        self.pieces[L_DR] = org[L_UR].rotate(Front)
+        self.pieces[L_D] = org[L_R].rotate(Front)
+        self.pieces[L_DL] = org[L_DR].rotate(Front)
+        self.pieces[L_L] = org[L_D].rotate(Front)
+        self.pieces[L_UL] = org[L_DL].rotate(Front)
+        self.pieces[L_U] = org[L_L].rotate(Front)
+        return
+
+    def S_(self, quiet=False):
+        if not quiet: print "<S'>"
+        org = self.pieces[:]
+        self.pieces[L_UR] = org[L_DR].rotate(Back)
+        self.pieces[L_R] = org[L_D].rotate(Back)
+        self.pieces[L_DR] = org[L_DL].rotate(Back)
+        self.pieces[L_D] = org[L_L].rotate(Back)
+        self.pieces[L_DL] = org[L_UL].rotate(Back)
+        self.pieces[L_L] = org[L_U].rotate(Back)
+        self.pieces[L_UL] = org[L_UR].rotate(Back)
+        self.pieces[L_U] = org[L_R].rotate(Back)
+        return
+
+    def S2(self, quiet=False):
+        if not quiet: print "<S2>"
+        org = self.pieces[:]
+        self.pieces[L_UR] = org[L_DL].rotate(Front).rotate(Front)
+        self.pieces[L_R] = org[L_L].rotate(Front).rotate(Front)
+        self.pieces[L_DR] = org[L_UL].rotate(Front).rotate(Front)
+        self.pieces[L_D] = org[L_U].rotate(Front).rotate(Front)
+        self.pieces[L_DL] = org[L_UR].rotate(Front).rotate(Front)
+        self.pieces[L_L] = org[L_R].rotate(Front).rotate(Front)
+        self.pieces[L_UL] = org[L_DR].rotate(Front).rotate(Front)
+        self.pieces[L_U] = org[L_D].rotate(Front).rotate(Front)
+        return
+        
     def get_colors_on_face(self, face):
         if face == Right:
             return (self.pieces[L_URF].get_color(face),
@@ -435,26 +579,51 @@ class Cube(object):
                     self.pieces[L_DLB].get_color(face) )
         return
     
-    def show_faces(self):
-        print "<-- show faces -->"
-        if self.debug:
+    def show_faces(self, get_only=False, standard=False, color_num=False):
+        if not get_only: print "<-- show faces -->"
+        if self.debug and not get_only:
             print "str_position:"
-            print self.get_str_position()
+            print self.get_str_position(standard)
+        ret = []
+        #
+        if standard:
+            center_colors = self.center_colors
+        else:
+            center_colors = (RED, ORANGE, WHITE, BLUE, GREEN, YELLOW)
+            
         for i in range(6):
-            print "%s:" % FACE[i]
-            colors = self.get_colors_on_face(i)
-            print colors[0:3]
-            print colors[3:6]
-            print colors[6:9]
-        return
+            colors = [center_colors.index(c) for c in self.get_colors_on_face(i)]
+            if not color_num:
+                colors = [COLOR[c] for c in colors]
+            if not get_only:
+                print "%s:" % FACE[i]
+                print colors[0:3]
+                print colors[3:6]
+                print colors[6:9]
+            ret.append(colors)
+        return ret
 
     def run(self, batch, confirm=False, quiet=False):
         # batch: 回転記号の文字列
         if not quiet: print "[*]", batch
         que = []
+        in_entire_checking = False
         for b in batch:
             #print b
             #print que
+            if in_entire_checking:
+                if b == ")":
+                    in_entire_checking = False
+                    continue
+                elif ("(%c)" % b) in ENTIRE_ROTATE_WAYS:
+                    que.append(getattr(self, b))
+                    continue
+                else:
+                    print "[*] 回転記号 構文エラー"
+                    if not quiet:
+                        raise SyntaxError, "The sign surrounded by \"( )\" must be in " + str(ENTIRE_ROTATE_WAYS)
+                    else:
+                        return
             if b in SINGLE_ROTATE_WAYS:
                 que.append(getattr(self, b))
             elif b == "'":
@@ -463,7 +632,7 @@ class Cube(object):
                 else:
                     print "[*] 回転記号 構文エラー"
                     if not quiet:
-                        raise SyntaxError, "The sign before \"'\" must be 'R','L','U','D','F',or 'B'."
+                        raise SyntaxError, "The sign before \"'\" must be in " + str(SINGLE_ROTATE_WAYS)
                     else:
                         return
             elif b == "2":
@@ -472,26 +641,33 @@ class Cube(object):
                 else:
                     print "[*] 回転記号 構文エラー"
                     if not quiet:
-                        raise SyntaxError, "The sign before \"2\" must be in" + str(SNGLE_ROTATE_WAYS)
+                        raise SyntaxError, "The sign before \"2\" must be in " + str(SNGLE_ROTATE_WAYS)
                     else:
                         return
+            elif b == "(":
+                in_entire_checking = True
+            else:
+                print "[*] 回転記号 構文エラー"
+                return
         for q in que:
             q()
             if self.debug: self.show_faces()
             if confirm:
                 raw_input() 
-        return
+        return len(que)
     
     def game(self):
         print "<-- GAME MODE -->"
         print "Let's move in many ways!"
         print
         while 1:
-            print "Press Ctrl-C to quit."
-            print "Enter some moving notations."
+            print "Enter some move notations or 'quit' to quit this program."
             ri = raw_input(">")
-            self.run(ri)
+            if ri.strip() == "quit":
+                return
+            self.run(ri, quiet=True)
             if not self.debug: self.show_faces()
+        return
     
 if __name__ == "__main__":
     from optparse import OptionParser
@@ -504,20 +680,21 @@ if __name__ == "__main__":
                       action="store_true", default=False,
                       help="scramble before moving")
     parser.add_option("-b", "--batch", dest="batch",
-                      default=None, help="run a batch of move notation")
+                      default=None, help="run a batch of move notations")
     parser.add_option("-c", "--confirm", dest="confirm",
                       action="store_true", default=False,
                       help="confirm each steps")
     parser.add_option("-g", "--game", dest="game",
                       action="store_true", default=False,
-                      help="set gaming mode on")
+                      help="enable gaming mode")
+    parser.add_option("-v", "--view", dest="colors",
+                      default=None, help="set each view of faces of cube in 'Right, Left, Up, Down, Front, Back' order. (ex. -v \"RRRRRRRRR|OOOOOOOOO|WWWWWWWWW|BBBBBBBBB|GGGGGGGGG|YYYYYYYYY\"")
     (options, args) = parser.parse_args()
 
-    if (options.scramble == False) and (options.batch == None) and (options.game == False):
+    if (options.scramble == False) and (options.batch == None) and (options.game == False) and (options.colors == None):
         parser.print_help()
     else:
-        c = Cube(debug=options.debug)
-        c.show_faces()
+        c = Cube(debug=options.debug, colors=options.colors)
         if options.scramble:
             c.scramble()
         if options.batch:
