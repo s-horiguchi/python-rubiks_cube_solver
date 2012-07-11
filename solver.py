@@ -66,7 +66,6 @@ def get_value_from_dict_by_key_str(d, s):
             
     return ret
 
-
 def del_item_from_dict_by_key_str(d, s):
     print "[*] @del", d,s
     if s:
@@ -84,14 +83,6 @@ class Solver(object):
         self.Session = sessionmaker(bind=self.engine)
         
     def main(self):
-        #solu = Solution("R", 1)
-        #pos1 = Position("0,-1,1,2,-1,-1,5|1,-1,-1,2,-1,-1,5|2,0,-1,2,-1,-1,5|3,-1,1,2,-1,-1,-1|4,-1,-1,2,-1,-1,-1|5,0,-1,2,-1,-1,-1|6,-1,1,2,-1,4,-1|7,-1,-1,2,-1,4,-1|8,0,-1,2,-1,4,-1|9,-1,1,-1,-1,-1,5|10,-1,-1,-1,-1,-1,5|11,0,-1,-1,-1,-1,5|12,-1,1,-1,-1,-1,-1|13,0,-1,-1,-1,-1,-1|14,-1,1,-1,-1,4,-1|15,-1,-1,-1,-1,4,-1|16,0,-1,-1,-1,4,-1|17,-1,1,-1,3,-1,5|18,-1,-1,-1,3,-1,5|19,0,-1,-1,3,-1,5|20,-1,1,-1,3,-1,-1|21,-1,-1,-1,3,-1,-1|22,0,-1,-1,3,-1,-1|23,-1,1,-1,3,4,-1|24,-1,-1,-1,3,4,-1|25,0,-1,-1,3,4,-1")
-        #pos2 = Position("0,-1,1,2,-1,-1,5|1,-1,-1,2,-1,-1,5|8,0,-1,4,-1,-1,2|3,-1,1,2,-1,-1,-1|4,-1,-1,2,-1,-1,-1|16,0,-1,4,-1,-1,-1|6,-1,1,2,-1,4,-1|7,-1,-1,2,-1,4,-1|25,0,-1,4,-1,3,-1|9,-1,1,-1,-1,-1,5|10,-1,-1,-1,-1,-1,5|5,0,-1,-1,-1,-1,2|12,-1,1,-1,-1,-1,-1|13,0,-1,-1,-1,-1,-1|14,-1,1,-1,-1,4,-1|15,-1,-1,-1,-1,4,-1|22,0,-1,-1,-1,3,-1|17,-1,1,-1,3,-1,5|18,-1,-1,-1,3,-1,5|2,0,-1,-1,5,-1,2|20,-1,1,-1,3,-1,-1|21,-1,-1,-1,3,-1,-1|11,0,-1,-1,5,-1,-1|23,-1,1,-1,3,4,-1|24,-1,-1,-1,3,4,-1|19,0,-1,-1,5,3,-1")
-        #session.add_all([solu, pos1, pos2])
-        #session.commit()
-        #ba = BeforeAfter(solu.id, pos1.id, pos2.id)
-        #session.add(ba)
-        #session.commit()
         if self.debug:
             print "[*] normal"
             self.cube.show_faces(standard=False)
@@ -99,50 +90,52 @@ class Solver(object):
             self.cube.show_faces(standard=True)
         
         self.first_position = self.cube.get_str_position(standard=True)
-        self.searched_processes = {"num_of_moves":0}
+        #self.searched_processes = {"num_of_moves":0}
         self.goal = "0,-1,1,2,-1,-1,5|1,-1,-1,2,-1,-1,5|2,0,-1,2,-1,-1,5|3,-1,1,2,-1,-1,-1|4,-1,-1,2,-1,-1,-1|5,0,-1,2,-1,-1,-1|6,-1,1,2,-1,4,-1|7,-1,-1,2,-1,4,-1|8,0,-1,2,-1,4,-1|9,-1,1,-1,-1,-1,5|10,-1,-1,-1,-1,-1,5|11,0,-1,-1,-1,-1,5|12,-1,1,-1,-1,-1,-1|13,0,-1,-1,-1,-1,-1|14,-1,1,-1,-1,4,-1|15,-1,-1,-1,-1,4,-1|16,0,-1,-1,-1,4,-1|17,-1,1,-1,3,-1,5|18,-1,-1,-1,3,-1,5|19,0,-1,-1,3,-1,5|20,-1,1,-1,3,-1,-1|21,-1,-1,-1,3,-1,-1|22,0,-1,-1,3,-1,-1|23,-1,1,-1,3,4,-1|24,-1,-1,-1,3,4,-1|25,0,-1,-1,3,4,-1"
+        self.solutions = []
 
-        ret = self.loop("", self.first_position)
-        if ret:
-            print 
-            print "[*] Solution Found!!"
-            print ">", ret[0]
-            print "length:", ret[1]
+        self.loop([], self.first_position)
+        print 
+        if self.solutions:
+            print "[*] Solution Found: %d" % len(self.solutions)
+            self.solutions.sort(key=lambda sol: sol[1])
+            print "shortest one:", self.solutions[0][0]
+            print "length:", self.solutions[0][1]
         else:
-            print
             print "[*] couldn't find!!"
         return
 
-    def loop(self, cur_depth, p):
-        print cur_depth, p
+    def loop(self, cur_depth, pos):
+        print "-- loop() @", [baid for baid, p in cur_depth]
+        # cur_depth = [(BeforeAfter.id, before_position), (...), ...]
+        # pos = after_position
         session = self.Session()
-        query = session.query(BeforeAfter).join(Position, "before_position").filter(Position.position==p)
-        if query.count() == 0:
-            # to clear up
-            del_item_from_dict_by_key_str(self.searched_processes, cur_depth)
-            print self.searched_processes
-            print "dead branch"
-            ret = None
-        else:
-            for ba in query.all():
-                self.searched_processes[str(ba.id)] = {"num_of_moves":
-                                                      get_value_from_dict_by_key_str(self.searched_processes, cur_depth+".num_of_moves") + ba.solution.num_of_moves, 
-                                                  }
-                print self.searched_processes
-                if ba.after_position.position == self.goal:
-                    print "[*] Found!"
-                    move_notations = ""
-                    for ba_id in cur_depth.split("."):
-                        ba = session.query(BeforeAfter).get(int(ba.id))
-                        move_notations += ba.solution.move_notations
-                    print "[*] solution:", move_notations
-                    print "[*] number of moves:", get_value_from_dict_by_key_str(self.searched_processes, cur_depth+".num_of_moves")
-                    ret = (ba.solution.move_notations, ba.solution.num_of_moves)
+        query = session.query(BeforeAfter).join(Position, "before_position").filter(Position.position==pos) ## tricky
+        ret = []
+        for ba in query.all():
+            #self.searched_processes[str(ba.id)] = {"num_of_moves":
+            #                                           get_value_from_dict_by_key_str(self.searched_processes, cur_depth+".num_of_moves") + ba.solution.num_of_moves, 
+            #                                       }
+            if ba.after_position.position == self.goal:
+                print "[*] Found! @", [baid for baid, p in cur_depth]
+                ret.append((ba.solution.move_notations, ba.solution.num_of_moves))
+            else:
+                if (True in [ba.after_position.position == p for baid, p in cur_depth]) or (ba.after_position.position == self.first_position):
+                    print "looping :-("
                 else:
-                    print "new branch"
-                    ret = self.loop(cur_depth+".%d" % ba.id, ba.after_position.position)
-                    if ret:
-                        ret = (ba.solution.move_notations + ret[0], ret[1] + ba.solution.num_of_moves)
+                    print "new branch :P"
+                    ret_ = self.loop(cur_depth+[(ba.id, pos)], ba.after_position.position)
+                    if ret_: # found solution
+                        [ret.append((ba.solution.move_notations + r[0], r[1] + ba.solution.num_of_moves)) for r in ret_]
+        if ret == []:
+            # to clear up
+            print "dead branch :-C"
+            ret = False
+        else:
+            if cur_depth == []:
+                for r in ret:
+                    self.solutions.append(r)
+
         session.close()
         return ret
         
