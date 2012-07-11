@@ -134,8 +134,10 @@ TRANSLATION_MAP = { # key: colors of center cube /item: which notation each one 
 
     (GREEN, YELLOW, WHITE, BLUE, ORANGE, RED):("B", "B'", "B2", "F", "F'", "F2", "U", "U'", "U2", "D", "D'", "D2", "R", "R'", "R2", "L", "L'", "L2",
                                                "S", "S'", "S2", "E", "E'", "E2", "M'", "M", "M2", "(f')", "(f)", "(r)", "(r')", "(u)", "(u')"),
-    (ORANGE, RED, WHITE, BLUE, YELLOW, GREEN):None,
-    (YELLOW, GREEN, WHITE, BLUE, RED, ORANGE):None,
+    (ORANGE, RED, WHITE, BLUE, YELLOW, GREEN):("L", "L'", "L2", "R", "R'", "R2", "U", "U'", "U2", "D", "D'", "D2", "B", "B'", "B2", "F", "F'", "F2",
+                                               "M'", "M", "M2", "E", "E'", "E2", "S'", "S", "S2", "(r')", "(r)", "(f)", "(f')", "(u')", "(u)"),
+    (YELLOW, GREEN, WHITE, BLUE, RED, ORANGE):("F", "F'", "F2", "B", "B'", "B2", "U", "U'", "U2", "D", "D'", "D2", "L", "L'", "L2", "R", "R'", "R2",
+                                               "S'", "S", "S2", "E", "E'", "E2", "M", "M'", "M2", "(f)", "(f')", "(r')", "(r)", "(u)", "(u')"),
     # (GREEN, YELLOW)
     (RED, ORANGE, GREEN, YELLOW, BLUE, WHITE):None,
     (BLUE, WHITE, GREEN, YELLOW, ORANGE, RED):None,

@@ -121,7 +121,7 @@ class Solver(object):
             # to clear up
             del_item_from_dict_by_key_str(self.searched_processes, cur_depth)
             print self.searched_processes
-            print "end up"
+            print "dead branch"
             ret = None
         else:
             for ba in query.all():
@@ -139,39 +139,52 @@ class Solver(object):
                     print "[*] number of moves:", get_value_from_dict_by_key_str(self.searched_processes, cur_depth+".num_of_moves")
                     ret = (ba.solution.move_notations, ba.solution.num_of_moves)
                 else:
-                    print "new"
+                    print "new branch"
                     ret = self.loop(cur_depth+".%d" % ba.id, ba.after_position.position)
                     if ret:
                         ret = (ba.solution.move_notations + ret[0], ret[1] + ba.solution.num_of_moves)
         session.close()
         return ret
         
-    def add_data(self, batch, constantf):
-        # constantf: ex.)"DUDDDDDD|DUDDDDDDD|DDDDDDDDD|DDDDDDDDD|DUDDDDDDD|DDDDDDDDD"
+    def add_data(self, batch, colors):
+        # colors: ex.)"URRURRRRR|OOUOOUOOO|WWWWWWUUU|BUBBBBBBB|GGGGGGGGG|YYYYYYYYY"
+        # "U" = UNDEFINED
         undefined = []
         unused_colors = [9, 9, 9, 9, 9, 9] # for R,L,U,D,F,B
-        org_faces_colors = self.cube.show_faces(get_only=True, standard=False, color_num=True)
-        for i1, f in enumerate(constantf.split("|")):
+        faces_colors = [[None, None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None]] #[[None]*9]*6
+        #faces_colors = self.cube.show_faces(get_only=True, standard=False, color_num=True)
+        print faces_colors
+        for i1, f in enumerate(colors.split("|")):
             for i2, c in enumerate(f):
                 if c == "U":  # UNDEFINED
                     undefined.append((i1, i2))
-                elif c == "D": # DEFINED
-                    unused_colors[org_faces_colors[i1][i2]] -= 1
+                elif c in COLOR[:-3]: # DEFINED
+                    i = COLOR.index(c)
+                    unused_colors[i] -= 1
+                    faces_colors[i1][i2] = i
+                    print (i1, i2), i, faces_colors
+                    raw_input()
                 else:
-                    print "[*] invalid ConstantFilter!"
+                    print "[*] invalid FACE_VIEWS including 'UNDEFINED'!"
                     raise
-        unused_str = "".join([COLOR[i]*c for i,c in enumerate(unused_colors)])
-        assert len(unused_str) == len(undefined)
-        faces_colors = org_faces_colors[:]
-        for perm in itertools.permutations(unused_str):
-            for i1, i2 in undefined:
-                faces_colors[i1][i2] = perm
-            print faces_colors
+        print faces_colors
+        print undefined
+        print unused_colors
+        unused_ncolor = []
+        for i, c in enumerate(unused_colors):
+            for x in xrange(c):
+                unused_ncolor.append(i)
+
+        assert len(unused_ncolor) == len(undefined)
+
+        for perm in itertools.permutations(unused_ncolor):
+            for i,p in zip(undefined, perm):
+                faces_colors[i[0]][i[1]] = p
             if not self.cube.set_by_faces_color(faces_colors, quiet=True):
                 continue
             else:
+                #print "ok", faces_colors
                 self.update_db(batch)
-        self.cube.set_by_faces_color(org_faces_colors)
         return
 
     def update_db(self, batch):
@@ -221,30 +234,47 @@ class Solver(object):
         
         session.close()
         return
-        #cube.get_front_face_color()
+
+    def check_positions_in_db(self):
+        session = self.Session()
+        query = session.query(Position)
+        for pos in query.all():
+            print "[*] <Position(%d)>" % pos.id
+            self.cube.set_str_position(pos.position)
+            self.cube.show_faces(standard=False) # whichever
+            print
+        session.close()
+        return
         
 if __name__ == "__main__":
     from optparse import OptionParser
 
-    parser = OptionParser("Usage: %prog [options] FACE_VIEWS (CONST_FILTER)")
+    parser = OptionParser("Usage: %prog [options] FACE_VIEWS")
     parser.add_option("-a", "--add", dest="add", metavar="BATCH",
-                      default=None, help="add data after running a batch of move notations with CONST_FILTER")
+                      default=None, help="add data after running a batch of move notations")
     parser.add_option("-s", "--solve", dest="solve",
                       action="store_true", default=False,
                       help="enable solving mode")
     parser.add_option("-d", "--debug", dest="debug",
                       action="store_true", default=False,
                       help="enable debug mode")
+    parser.add_option("-p", "--check_position", dest="checkp",
+                      action="store_true", default=False,
+                      help="check positions in database (for debug/need not specify FACE_VIEWS)")
     (options, args) = parser.parse_args()
 
     if len(args) > 0:
-        if options.add and len(args) > 1:
-            s = Solver(colors=args[0], debug=options.debug)
-            s.add_data(options.add, constantf=args[1])
+        if options.add:
+            s = Solver(debug=options.debug)
+            s.add_data(options.add, colors=args[0])
         elif options.solve:
             s = Solver(colors=args[0], debug=options.debug)
             s.main()
         else:
             parser.print_help()
-    else:
-        parser.print_help()
+    else: # there's no FACE_VIEW
+        if options.checkp:
+            s = Solver()
+            s.check_positions_in_db()
+        else:
+            parser.print_help()

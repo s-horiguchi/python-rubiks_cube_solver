@@ -72,7 +72,7 @@ class Cube(object):
                 if is_scrambled:
                     self.scramble()
         else:
-            self.pieces = [Piece(int(p.split(",")[0]), [int(c) for c in p.split(",")[1:]]) for p in str_position.split("|")]
+            self.set_str_position(str_position)
         self.debug = debug
         self.center_colors = tuple([COLOR.index(f[4]) for f in self.show_faces(get_only=True)])
         self.translation_map = TRANSLATION_MAP[self.center_colors]
@@ -110,6 +110,10 @@ class Cube(object):
             self.pieces.append(Piece(num=pnum, color=piece))
         return True
         
+    def set_str_position(self, str_position):
+        self.pieces = [Piece(int(p.split(",")[0]), [int(c) for c in p.split(",")[1:]]) for p in str_position.split("|")]
+        return
+
     def get_str_position(self, standard=False):
         if standard:
             center_colors = self.center_colors
