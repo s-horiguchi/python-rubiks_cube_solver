@@ -152,8 +152,6 @@ class Solver(object):
         undefined = []
         unused_colors = [9, 9, 9, 9, 9, 9] # for R,L,U,D,F,B
         faces_colors = [[None, None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None]] #[[None]*9]*6
-        #faces_colors = self.cube.show_faces(get_only=True, standard=False, color_num=True)
-        print faces_colors
         for i1, f in enumerate(colors.split("|")):
             for i2, c in enumerate(f):
                 if c == "U":  # UNDEFINED
@@ -162,29 +160,29 @@ class Solver(object):
                     i = COLOR.index(c)
                     unused_colors[i] -= 1
                     faces_colors[i1][i2] = i
-                    print (i1, i2), i, faces_colors
                     raw_input()
                 else:
                     print "[*] invalid FACE_VIEWS including 'UNDEFINED'!"
                     raise
-        print faces_colors
-        print undefined
-        print unused_colors
         unused_ncolor = []
         for i, c in enumerate(unused_colors):
             for x in xrange(c):
                 unused_ncolor.append(i)
 
         assert len(unused_ncolor) == len(undefined)
-
+        counter = 0
+        
         for perm in itertools.permutations(unused_ncolor):
             for i,p in zip(undefined, perm):
                 faces_colors[i[0]][i[1]] = p
             if not self.cube.set_by_faces_color(faces_colors, quiet=True):
                 continue
             else:
-                #print "ok", faces_colors
                 self.update_db(batch)
+                counter += 1
+        print
+        print "[*] Finish!"
+        print "[*] total number of patterns:", counter
         return
 
     def update_db(self, batch):

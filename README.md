@@ -12,7 +12,7 @@ python-rubiks\_cube\_solver
    - キューブのデータベース上の最適解探索スクリプト
 
 からなる。
-回転記号を使っているので[ここ](http://www.planet-puzzle.com/cubekaiten.html)を参照してください。
+回転記号を使っているので[ここ](http://www.planet-puzzle.com/cubekaiten.html)と[ここ](http://www.planet-puzzle.com/cube-shift.html)を参照してください。
 
 ### cube.py ###
     > python cube.py -h
@@ -41,15 +41,17 @@ scramble -> batch -> game
 
 ### solver.py ###
     > python solver.py -h
-    Usage: solver.py [options] FACE_VIEWS (CONST_FILTER)
+    Usage: solver.py [options] FACE_VIEWS
     
     Options:
       -h, --help            show this help message and exit
       -a BATCH, --add=BATCH
-                            add data after running a batch of move notations with
-                            CONST_FILTER
+                            add data after running a batch of move notations
       -s, --solve           enable solving mode
       -d, --debug           enable debug mode
+      -p, --check_position  check positions in database (for debug/need not
+                            specify FACE_VIEWS)
+    
 
 database.sqliteにどう動かしたらこうなるというデータをためておいて、  
 そのデータベースから適切な手順を組み合わせて全面揃える。SQLAlchemy使用。  
@@ -61,9 +63,9 @@ database.sqliteにどう動かしたらこうなるというデータをため�
 ![展開図](https://github.com/pheehs/python-rubiks_cube_solver/raw/master/tenkai-zu.jpg "展開図")
 
 データベスに新規登録もこのスクリプトでやる。  
-その場合、`FACE_VIEWS`に動かす前の状態、`CONST_FILTER`を指定して、何色でもいいところを指定する。
-決まっている色は`D`、何色でもいいところは`U`を指定する。
-すなわち、何色でもいいところにも`FACE_VIEWS`で色を指定する必要があるが、適当な色を入れておく。
+その場合、`FACE_VIEWS`に動かす前の状態を指定する。  
+基本的に上で書いた`FACE_VIEWS`と同じように表現して、何色でもいいところは`U`を指定する。  
+`U`があるときは、可能性のある色の組み合わせ全てを探してそれぞれの場合を登録する。  
 `-a BATCH`の`BATCH`には登録する手順を指定。
 
 ### database.sqlite ###
@@ -118,5 +120,4 @@ database.sqliteにどう動かしたらこうなるというデータをため�
  - 回転体
  - 自動で解を見つけ、解く。
    - ループの可能性
-   - データベース更新補助のために、UNDEFINEDで指定したところを埋めてくれる関数か何か
  - グラフィック
