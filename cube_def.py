@@ -121,10 +121,11 @@ LOCATION = [((Up, 0), (Left, 0), (Back, 2)),
             ]
 NUM_SCRAMBLE_MOVES = 25
 
-ALL_ROTATE_WAYS = ["R", "R'", "R2", "L", "L'", "L2", "U", "U'", "U2", "D", "D'", "D2", "F", "F'", "F2", "B", "B'", "B2", "M", "M'", "M2", "E", "E'", "E2", "S", "S'", "S2", "(r)", "(r')", "(f)", "(f')", "(u)", "(u')"]
+ALL_ROTATE_WAYS = ["R", "R'", "R2", "L", "L'", "L2", "U", "U'", "U2", "D", "D'", "D2", "F", "F'", "F2", "B", "B'", "B2", "M", "M'", "M2", "E", "E'", "E2", "S", "S'", "S2", "(r)", "(r')", "(r2)", "(f)", "(f')", "(f2)", "(u)", "(u')", "(u2)"]
 ROTATE_WAYS = ["R", "R'", "R2", "L", "L'", "L2", "U", "U'", "U2", "D", "D'", "D2", "F", "F'", "F2", "B", "B'", "B2"]
 SINGLE_ROTATE_WAYS = ["R", "L", "U", "D", "F", "B", "M", "E", "S"]
-ENTIRE_ROTATE_WAYS = ["(r)", "(r')", "(f)", "(f')", "(u)", "(u')"]
+ENTIRE_ROTATE_WAYS = ["(r)", "(r')", "(r2)", "(f)", "(f')", "(f2)", "(u)", "(u')", "(u2)"]
+ENTIRE_ROTATE_WAYS_simple = ["r", "f", "u"]
 
 TRANSLATION_MAP = { # key: colors of center cube /item: which notation each one in ALL_ROTATE_WAYS translate to
     # (up, donw) = (WHITE, BLUE)

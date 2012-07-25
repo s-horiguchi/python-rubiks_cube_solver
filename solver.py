@@ -8,7 +8,14 @@ from sqlalchemy import Integer, String
 from sqlalchemy.orm import relation, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 import itertools
+import datetime
 Base = declarative_base()
+
+STAGE_LIST = [(5, ""), # Cross on Down + Center on (Right, Left, Front, Back)
+              (4, ""), # All on Down
+              (8, ""), # Down and 2 step from Down on (Right, Left, Front, Back)
+              (4, ""), # Cross on Up
+              
 
 class Solution(Base):
     __tablename__ = "solutions"
@@ -55,34 +62,21 @@ class BeforeAfter(Base):
         self.after_position_id = after_position_id
 
     def __repr__(self):
-        return "<BeforeAfter(solu=%d, before_pos=%d, after_pos=%d)>" % (self.solution_id, self.before_position_id, self.after_position_id)
-
-def get_value_from_dict_by_key_str(d, s):
-    ret = d
-    if s:
-        for k in s.split("."):
-            if k != "":
-                ret = ret.get(k)
-            
-    return ret
-
-def del_item_from_dict_by_key_str(d, s):
-    print "[*] @del", d,s
-    if s:
-        d2 = get_value_from_dict_by_key_str(d, ".".join(s.split(".")[:-1]))
-        d2.pop(s.split(".")[-1])
-    return
+        return "<BeforeAfter(%d, solu=%d, before_pos=%d, after_pos=%d)>" % (self.id, self.solution_id, self.before_position_id, self.after_position_id)
 
 class Solver(object):
-    def __init__(self, debug=True, str_position=None, colors=None):
+    def __init__(self, debug=True, str_position=None, colors=None, is_first=False):
         self.cube = Cube(debug=debug, str_position=str_position, colors=colors)
         self.debug = debug
         # database init
         self.engine = create_engine("sqlite:///database.sqlite", echo=False, encoding="utf-8")
         Base.metadata.create_all(self.engine)
         self.Session = sessionmaker(bind=self.engine)
+        self.goal = "0,-1,1,2,-1,-1,5|1,-1,-1,2,-1,-1,5|2,0,-1,2,-1,-1,5|3,-1,1,2,-1,-1,-1|4,-1,-1,2,-1,-1,-1|5,0,-1,2,-1,-1,-1|6,-1,1,2,-1,4,-1|7,-1,-1,2,-1,4,-1|8,0,-1,2,-1,4,-1|9,-1,1,-1,-1,-1,5|10,-1,-1,-1,-1,-1,5|11,0,-1,-1,-1,-1,5|12,-1,1,-1,-1,-1,-1|13,0,-1,-1,-1,-1,-1|14,-1,1,-1,-1,4,-1|15,-1,-1,-1,-1,4,-1|16,0,-1,-1,-1,4,-1|17,-1,1,-1,3,-1,5|18,-1,-1,-1,3,-1,5|19,0,-1,-1,3,-1,5|20,-1,1,-1,3,-1,-1|21,-1,-1,-1,3,-1,-1|22,0,-1,-1,3,-1,-1|23,-1,1,-1,3,4,-1|24,-1,-1,-1,3,4,-1|25,0,-1,-1,3,4,-1"
+        self.is_first = is_first
         
     def main(self):
+        self.start_time = datetime.datetime.now()
         if self.debug:
             print "[*] normal"
             self.cube.show_faces(standard=False)
@@ -90,51 +84,83 @@ class Solver(object):
             self.cube.show_faces(standard=True)
         
         self.first_position = self.cube.get_str_position(standard=True)
-        #self.searched_processes = {"num_of_moves":0}
-        self.goal = "0,-1,1,2,-1,-1,5|1,-1,-1,2,-1,-1,5|2,0,-1,2,-1,-1,5|3,-1,1,2,-1,-1,-1|4,-1,-1,2,-1,-1,-1|5,0,-1,2,-1,-1,-1|6,-1,1,2,-1,4,-1|7,-1,-1,2,-1,4,-1|8,0,-1,2,-1,4,-1|9,-1,1,-1,-1,-1,5|10,-1,-1,-1,-1,-1,5|11,0,-1,-1,-1,-1,5|12,-1,1,-1,-1,-1,-1|13,0,-1,-1,-1,-1,-1|14,-1,1,-1,-1,4,-1|15,-1,-1,-1,-1,4,-1|16,0,-1,-1,-1,4,-1|17,-1,1,-1,3,-1,5|18,-1,-1,-1,3,-1,5|19,0,-1,-1,3,-1,5|20,-1,1,-1,3,-1,-1|21,-1,-1,-1,3,-1,-1|22,0,-1,-1,3,-1,-1|23,-1,1,-1,3,4,-1|24,-1,-1,-1,3,4,-1|25,0,-1,-1,3,4,-1"
-        self.solutions = []
+        
+        self.solution = (None, 1000) # self.solution[1] is enough big ?
 
-        self.loop([], self.first_position)
-        print 
-        if self.solutions:
-            print "[*] Solution Found: %d" % len(self.solutions)
-            self.solutions.sort(key=lambda sol: sol[1])
-            print "shortest one:", self.solutions[0][0]
-            print "length:", self.solutions[0][1]
+        for max_depth, goal in STAGE_LIST:
+            self.run_stage(max_depth, goal)
+            
+
+        if self.solution[0]:
+            print "[*] Solution Found:"
+            print "shortest one:", self.solution[0]
+            print "length:", self.solution[1]
         else:
             print "[*] couldn't find!!"
+        print 
+        delta = datetime.datetime.now() - self.start_time
+        print "Running time: %ddays %dh:%dm:%d.%ds" % (delta.days, delta.seconds / 3600, (delta.seconds % 3600) / 60, (delta.seconds % 3600) % 60, delta.microseconds)
+        print 
+        return
+        
+    def run_stage(self, cur_max_depth, cur_goal):
+        self.max_depth = cur_max_depth
+        self.cur_goal = cur_goal
+        self.loop([], self.first_position)
+
         return
 
     def loop(self, cur_depth, pos):
         print "-- loop() @", [baid for baid, p in cur_depth]
-        # cur_depth = [(BeforeAfter.id, before_position), (...), ...]
+        # cur_depth = [((BeforeAfter.id, ), before_position), (...), ...]
         # pos = after_position
         session = self.Session()
-        query = session.query(BeforeAfter).join(Position, "before_position").filter(Position.position==pos) ## tricky
+        ba_cand = []
+        for ba in session.query(BeforeAfter).join(Position, "before_position").filter(Position.position==pos).all(): ## tricky
+            ba_cand.append((ba, ""))
+        self.cube.set_str_position(self.first_position) # reset cube to first_position
+        self.cube.run("".join([ba[1]+session.query(BeforeAfter).get(ba[0]).solution.move_notations for ba, p in cur_depth]), confirm=False, quiet=True) # store position in this routine
+        stored_position = self.cube.get_str_position(standard=False)
+        print "< stored_pos ( %s )>" % "".join([ba[1]+session.query(BeforeAfter).get(ba[0]).solution.move_notations for ba, p in cur_depth]), 
+        self.cube.show_faces(standard=True)
+        for w in ENTIRE_ROTATE_WAYS: # will be ALL_ROTATE_WAYS
+            self.cube.run(w, confirm=False, quiet=True)
+            #print "<", w, ">", 
+            #self.cube.show_faces(standard=True)
+            for ba in session.query(BeforeAfter).join(Position, "before_position").filter(Position.position==self.cube.get_str_position(standard=True)).all():
+                ba_cand.append((ba, w))
+            self.cube.set_str_position(stored_position) # restore
         ret = []
-        for ba in query.all():
-            #self.searched_processes[str(ba.id)] = {"num_of_moves":
-            #                                           get_value_from_dict_by_key_str(self.searched_processes, cur_depth+".num_of_moves") + ba.solution.num_of_moves, 
-            #                                       }
-            if ba.after_position.position == self.goal:
+        print ba_cand
+        for ba in ba_cand:
+            if ba[1]:
+                print "[*] with rotate", ba[1]
+            if ba[0].after_position.position == self.cur_goal:
                 print "[*] Found! @", [baid for baid, p in cur_depth]
-                ret.append((ba.solution.move_notations, ba.solution.num_of_moves))
+                ret.append((ba[1] + ba[0].solution.move_notations, 1 + ba[0].solution.num_of_moves))
             else:
-                if (True in [ba.after_position.position == p for baid, p in cur_depth]) or (ba.after_position.position == self.first_position):
+                if (True in [ba[0].after_position.position == p for baid, p in cur_depth]) or (ba[0].after_position.position == self.first_position):
                     print "looping :-("
+                elif len(cur_depth) > self.max_depth:
+                    print "too long branch X("
                 else:
                     print "new branch :P"
-                    ret_ = self.loop(cur_depth+[(ba.id, pos)], ba.after_position.position)
+                    ret_ = self.loop(cur_depth+[((ba[0].id, ba[1]), pos)], ba[0].after_position.position)
+                    print "-- loop() @", [baid for baid, p in cur_depth]
                     if ret_: # found solution
-                        [ret.append((ba.solution.move_notations + r[0], r[1] + ba.solution.num_of_moves)) for r in ret_]
-        if ret == []:
+                        if ba[1]:
+                            [ret.append((ba[1] + ba[0].solution.move_notations + r[0], 1 + r[1] + ba[0].solution.num_of_moves)) for r in ret_ if r[1] < self.solution[1]]
+                        else:
+                            [ret.append((ba[0].solution.move_notations + r[0], r[1] + ba[0].solution.num_of_moves)) for r in ret_ if r[1] < self.solution[1]]
+        if ret == []: # dead branch
             # to clear up
             print "dead branch :-C"
             ret = False
-        else:
-            if cur_depth == []:
+        else: # in solution branch
+            if cur_depth == []: # really final step
                 for r in ret:
-                    self.solutions.append(r)
+                    if self.solution[1] > r[1]:
+                        self.solution = r
 
         session.close()
         return ret
@@ -153,7 +179,7 @@ class Solver(object):
                     i = COLOR.index(c)
                     unused_colors[i] -= 1
                     faces_colors[i1][i2] = i
-                    raw_input()
+                    #raw_input()
                 else:
                     print "[*] invalid FACE_VIEWS including 'UNDEFINED'!"
                     raise
@@ -184,14 +210,23 @@ class Solver(object):
         p = self.cube.get_str_position(standard=True)
         print p
         query = session.query(Position).filter(Position.position==p)
+        if p == self.goal:
+            print "[*] already finished solution"
+            return
+
         if query.count() > 0:
             before_pos = query.first()
+            if not self.is_first and session.query(BeforeAfter).filter(BeforeAfter.before_position==before_pos).count() > 0:
+                print "[*] better solution is already available."
+                print "[*] so prevent create new BeforeAfter and return."
+                return
         else:
             before_pos = Position(position=p)
             session.add(before_pos)
             session.commit()
             
         print "[*] before"
+        
         before_colors = self.cube.show_faces(standard=False)
         num_of_moves = self.cube.run(batch, quiet=False) ## run
         print "[*] after"
@@ -226,9 +261,11 @@ class Solver(object):
         session.close()
         return
 
-    def check_positions_in_db(self):
+    def check_positions_in_db(self, pid=None):
         session = self.Session()
         query = session.query(Position)
+        if pid:
+            query = query.filter(Position.id == pid)
         for pos in query.all():
             print "[*] <Position(%d)>" % pos.id
             self.cube.set_str_position(pos.position)
@@ -237,6 +274,10 @@ class Solver(object):
         session.close()
         return
         
+    def clear_db(self):
+        Base.metadata.drop_all(self.engine)
+        return
+    
 if __name__ == "__main__":
     from optparse import OptionParser
 
@@ -251,21 +292,33 @@ if __name__ == "__main__":
                       help="enable debug mode")
     parser.add_option("-p", "--check_position", dest="checkp",
                       action="store_true", default=False,
-                      help="check positions in database (for debug/need not specify FACE_VIEWS)")
+                      help="check positions in database (for debug)")
+    parser.add_option("-c", "--clar_db", dest="clear_db",
+                      action="store_true", default=False,
+                      help="clear all data from database")
+    parser.add_option("-f", "--is_first", dest="is_first",
+                      action="store_true", default=False,
+                      help="\"is first?\" flag")
     (options, args) = parser.parse_args()
 
     if len(args) > 0:
         if options.add:
-            s = Solver(debug=options.debug)
+            s = Solver(debug=options.debug, is_first=options.is_first)
             s.add_data(options.add, colors=args[0])
         elif options.solve:
-            s = Solver(colors=args[0], debug=options.debug)
+            s = Solver(colors=args[0], debug=options.debug, is_first=options.is_first)
             s.main()
+        elif options.checkp:
+            s = Solver(is_first=options.is_first)
+            s.check_positions_in_db(pid=args[0])
         else:
             parser.print_help()
     else: # there's no FACE_VIEW
         if options.checkp:
-            s = Solver()
+            s = Solver(is_first=options.is_first)
             s.check_positions_in_db()
+        elif options.clear_db:
+            s = Solver(is_first=options.is_first)
+            s.clear_db()
         else:
             parser.print_help()
