@@ -20,25 +20,28 @@ class Piece(object):
         ret += "]>"
         return ret
     
-    def rotate(self, face):
+    def rotate(self, face, times=1):
         # dire: 動かした面の定数
-        org = self.color[:]
-        if face == Right:
-            self.color = [org[Right], org[Left], org[Front], org[Back], org[Down], org[Up]]
-        elif face == Left:
-            self.color = [org[Right], org[Left], org[Back], org[Front], org[Up], org[Down]]
-        elif face == Up:
-            self.color = [org[Back], org[Front], org[Up], org[Down], org[Right], org[Left]]
-        elif face == Down:
-            self.color = [org[Front], org[Back], org[Up], org[Down], org[Left], org[Right]]
-        elif face == Front:
-            self.color = [org[Up], org[Down], org[Left], org[Right], org[Front], org[Back]]
-        elif face == Back:
-            self.color = [org[Down], org[Up], org[Right], org[Left], org[Front], org[Back]]
+        for i in xrange(times):
+            org = self.color[:]
+            if face == Right:
+                self.color = [org[Right], org[Left], org[Front], org[Back], org[Down], org[Up]]
+            elif face == Left:
+                self.color = [org[Right], org[Left], org[Back], org[Front], org[Up], org[Down]]
+            elif face == Up:
+                self.color = [org[Back], org[Front], org[Up], org[Down], org[Right], org[Left]]
+            elif face == Down:
+                self.color = [org[Front], org[Back], org[Up], org[Down], org[Left], org[Right]]
+            elif face == Front:
+                self.color = [org[Up], org[Down], org[Left], org[Right], org[Front], org[Back]]
+            elif face == Back:
+                self.color = [org[Down], org[Up], org[Right], org[Left], org[Front], org[Back]]
         return self
     
-    def get_rotation_to_be(self, pcolors):
-        self.color pcolors
+    def get_center_colors(self):
+        for i,rcc in enumerate(ROTATED_CENTER_COLORS):
+            if not False in [(rc == c) or (c == NONE) for rc, c in zip(rcc, self.color)]:
+                return i # slice of ROTATED_CENTER_COLORS
         
     def get_color(self, face):
         # face: 欲しい面の定数
@@ -79,10 +82,16 @@ class Cube(object):
             self.set_str_position(str_position)
         self.debug = debug
         self.center_colors = tuple([COLOR.index(f[4]) for f in self.show_faces(get_only=True)])
-        self.translation_map = TRANSLATION_MAP[self.center_colors]
+        self.translation_map = TRANSLATION_MAP[ROTATED_CENTER_COLORS.index(self.center_colors)]
 
 #    def get_standard_color_output(self):
 #        return [[self.center_colors.index(c) for c in f] for f in self.show_faces(get_only=True)]
+
+    def init(self):
+        self.pieces = [Piece(i) for i in range(26)]
+        self.center_colors = tuple([COLOR.index(f[4]) for f in self.show_faces(get_only=True)])
+        self.translation_map = TRANSLATION_MAP[ROTATED_CENTER_COLORS.index(self.center_colors)]
+        return
 
     def scramble(self, nmoves=None):
         if not nmoves: nmoves = NUM_SCRAMBLE_MOVES
@@ -125,10 +134,78 @@ class Cube(object):
             center_colors = (RED, ORANGE, WHITE, BLUE, GREEN, YELLOW)
         return "|".join([",".join([str(c) for c in p.export(center_colors)]) for p in self.pieces])
 
-    def translate_batch(self, batch): # 回転した奴向け
-        new_batch = ""
+    def get_piece_location(self, piece_num):
+        for num_loc, piece in enumerate(self.pieces):
+            if piece.num == piece_num:
+                return num_loc, piece
+            
+    def translate_batch(self, batch, quiet=False): # 回転した奴向け
+        splitted = []
+
+        in_entire_checking = False
         for b in batch:
-            new_batch += self.translation_map[b]
+            #print "b:", b
+            #print "que:", que
+            if in_entire_checking:
+                if b == ")":
+                    in_entire_checking = False
+                    continue
+                elif ("(%c)" % b) in ENTIRE_ROTATE_WAYS:
+                    splitted.append("(%c)"%b)
+                    continue
+                elif b == "'":
+                    if splitted[-1][1:-1] in ENTIRE_ROTATE_WAYS_simple:
+                        splitted[-1] = "(%c')" % splitted[-1][1]
+                    else:
+                        print "[*] 回転記号 構文エラー"
+                        if not quiet:
+                            raise SyntaxError, "The sign before \"'\" must be in " + str(ENTIRE_ROTATE_WAYS_simple)
+                        else:
+                            return
+                    continue
+                elif b == "2":
+                    if splitted[-1][1:-1] in ENTIRE_ROTATE_WAYS_simple:
+                        splitted[-1] = "(%c2)" % splitted[-1][1]
+                    else:
+                        print "[*] 回転記号 構文エラー"
+                        if not quiet:
+                            raise SyntaxError, "The sign before \"2\" must be in " + str(ENTIRE_ROTATE_WAYS_simple)
+                        else:
+                            return
+                    continue
+                else:
+                    print "[*] 回転記号 構文エラー"
+                    if not quiet:
+                        raise SyntaxError, "The sign surrounded by \"( )\" must be in " + str(ENTIRE_ROTATE_WAYS)
+                    else:
+                        return
+            if b in SINGLE_ROTATE_WAYS:
+                splitted.append(b)
+            elif b == "'":
+                if splitted[-1] in SINGLE_ROTATE_WAYS:
+                    splitted[-1] = splitted[-1]+"'"
+                else:
+                    print "[*] 回転記号 構文エラー"
+                    if not quiet:
+                        raise SyntaxError, "The sign before \"'\" must be in " + str(SINGLE_ROTATE_WAYS)
+                    else:
+                        return
+            elif b == "2":
+                if splitted[-1] in SINGLE_ROTATE_WAYS:
+                    splitted[-1] = splitted[-1]+"2"
+                else:
+                    print "[*] 回転記号 構文エラー"
+                    if not quiet:
+                        raise SyntaxError, "The sign before \"2\" must be in " + str(SNGLE_ROTATE_WAYS)
+                    else:
+                        return
+            elif b == "(":
+                in_entire_checking = True
+            else:
+                print "[*] 回転記号 構文エラー"
+
+                
+        new_batch = "".join([self.translation_map[ALL_ROTATE_WAYS.index(b)] for b in splitted])
         return new_batch
 
     def _R(self, quiet=False):
@@ -160,14 +237,14 @@ class Cube(object):
     def _R2(self, quiet=False):
         if not quiet: print "<R2>"
         org = self.pieces[:]
-        self.pieces[L_URB] = org[L_DRF].rotate(Right).rotate(Right)
-        self.pieces[L_UR] = org[L_DR].rotate(Right).rotate(Right)
-        self.pieces[L_URF] = org[L_DRB].rotate(Right).rotate(Right)
-        self.pieces[L_RF] = org[L_RB].rotate(Right).rotate(Right)
-        self.pieces[L_DRF] = org[L_URB].rotate(Right).rotate(Right)
-        self.pieces[L_DR] = org[L_UR].rotate(Right).rotate(Right)
-        self.pieces[L_DRB] = org[L_URF].rotate(Right).rotate(Right)
-        self.pieces[L_RB] = org[L_RF].rotate(Right).rotate(Right)
+        self.pieces[L_URB] = org[L_DRF].rotate(Right, 2)
+        self.pieces[L_UR] = org[L_DR].rotate(Right, 2)
+        self.pieces[L_URF] = org[L_DRB].rotate(Right, 2)
+        self.pieces[L_RF] = org[L_RB].rotate(Right, 2)
+        self.pieces[L_DRF] = org[L_URB].rotate(Right, 2)
+        self.pieces[L_DR] = org[L_UR].rotate(Right, 2)
+        self.pieces[L_DRB] = org[L_URF].rotate(Right, 2)
+        self.pieces[L_RB] = org[L_RF].rotate(Right, 2)
         return
     
     def _r(self, quiet=False):
@@ -220,14 +297,14 @@ class Cube(object):
     def _L2(self, quiet=False):
         if not quiet: print "<L2>"
         org = self.pieces[:]
-        self.pieces[L_ULB] = org[L_DLF].rotate(Left).rotate(Left)
-        self.pieces[L_UL] = org[L_DL].rotate(Left).rotate(Left)
-        self.pieces[L_ULF] = org[L_DLB].rotate(Left).rotate(Left)
-        self.pieces[L_LF] = org[L_LB].rotate(Left).rotate(Left)
-        self.pieces[L_DLF] = org[L_ULB].rotate(Left).rotate(Left)
-        self.pieces[L_DL] = org[L_UL].rotate(Left).rotate(Left)
-        self.pieces[L_DLB] = org[L_ULF].rotate(Left).rotate(Left)
-        self.pieces[L_LB] = org[L_LF].rotate(Left).rotate(Left)
+        self.pieces[L_ULB] = org[L_DLF].rotate(Left, 2)
+        self.pieces[L_UL] = org[L_DL].rotate(Left, 2)
+        self.pieces[L_ULF] = org[L_DLB].rotate(Left, 2)
+        self.pieces[L_LF] = org[L_LB].rotate(Left, 2)
+        self.pieces[L_DLF] = org[L_ULB].rotate(Left, 2)
+        self.pieces[L_DL] = org[L_UL].rotate(Left, 2)
+        self.pieces[L_DLB] = org[L_ULF].rotate(Left, 2)
+        self.pieces[L_LB] = org[L_LF].rotate(Left, 2)
         return
     
     def _U(self, quiet=False):
@@ -259,14 +336,14 @@ class Cube(object):
     def _U2(self, quiet=False):
         if not quiet: print "<U2>"
         org = self.pieces[:]
-        self.pieces[L_URB] = org[L_ULF].rotate(Up).rotate(Up)
-        self.pieces[L_UR] = org[L_UL].rotate(Up).rotate(Up)
-        self.pieces[L_URF] = org[L_ULB].rotate(Up).rotate(Up)
-        self.pieces[L_UF] = org[L_UB].rotate(Up).rotate(Up)
-        self.pieces[L_ULF] = org[L_URB].rotate(Up).rotate(Up)
-        self.pieces[L_UL] = org[L_UR].rotate(Up).rotate(Up)
-        self.pieces[L_ULB] = org[L_URF].rotate(Up).rotate(Up)
-        self.pieces[L_UB] = org[L_UF].rotate(Up).rotate(Up)
+        self.pieces[L_URB] = org[L_ULF].rotate(Up, 2)
+        self.pieces[L_UR] = org[L_UL].rotate(Up, 2)
+        self.pieces[L_URF] = org[L_ULB].rotate(Up, 2)
+        self.pieces[L_UF] = org[L_UB].rotate(Up, 2)
+        self.pieces[L_ULF] = org[L_URB].rotate(Up, 2)
+        self.pieces[L_UL] = org[L_UR].rotate(Up, 2)
+        self.pieces[L_ULB] = org[L_URF].rotate(Up, 2)
+        self.pieces[L_UB] = org[L_UF].rotate(Up, 2)
         return
     
     def _u(self, quiet=False):
@@ -319,14 +396,14 @@ class Cube(object):
     def _D2(self, quiet=False):
         if not quiet: print "<D2>"
         org = self.pieces[:]
-        self.pieces[L_DRB] = org[L_DLF].rotate(Down).rotate(Down)
-        self.pieces[L_DR] = org[L_DL].rotate(Down).rotate(Down)
-        self.pieces[L_DRF] = org[L_DLB].rotate(Down).rotate(Down)
-        self.pieces[L_DF] = org[L_DB].rotate(Down).rotate(Down)
-        self.pieces[L_DLF] = org[L_DRB].rotate(Down).rotate(Down)
-        self.pieces[L_DL] = org[L_DR].rotate(Down).rotate(Down)
-        self.pieces[L_DLB] = org[L_DRF].rotate(Down).rotate(Down)
-        self.pieces[L_DB] = org[L_DF].rotate(Down).rotate(Down)
+        self.pieces[L_DRB] = org[L_DLF].rotate(Down, 2)
+        self.pieces[L_DR] = org[L_DL].rotate(Down, 2)
+        self.pieces[L_DRF] = org[L_DLB].rotate(Down, 2)
+        self.pieces[L_DF] = org[L_DB].rotate(Down, 2)
+        self.pieces[L_DLF] = org[L_DRB].rotate(Down, 2)
+        self.pieces[L_DL] = org[L_DR].rotate(Down, 2)
+        self.pieces[L_DLB] = org[L_DRF].rotate(Down, 2)
+        self.pieces[L_DB] = org[L_DF].rotate(Down, 2)
         return
 
     def _F(self, quiet=False):
@@ -358,14 +435,14 @@ class Cube(object):
     def _F2(self, quiet=False):
         if not quiet: print "<F2>"
         org = self.pieces[:]
-        self.pieces[L_URF] = org[L_DLF].rotate(Front).rotate(Front)
-        self.pieces[L_RF] = org[L_LF].rotate(Front).rotate(Front)
-        self.pieces[L_DRF] = org[L_ULF].rotate(Front).rotate(Front)
-        self.pieces[L_DF] = org[L_UF].rotate(Front).rotate(Front)
-        self.pieces[L_DLF] = org[L_URF].rotate(Front).rotate(Front)
-        self.pieces[L_LF] = org[L_RF].rotate(Front).rotate(Front)
-        self.pieces[L_ULF] = org[L_DRF].rotate(Front).rotate(Front)
-        self.pieces[L_UF] = org[L_DF].rotate(Front).rotate(Front)
+        self.pieces[L_URF] = org[L_DLF].rotate(Front, 2)
+        self.pieces[L_RF] = org[L_LF].rotate(Front, 2)
+        self.pieces[L_DRF] = org[L_ULF].rotate(Front, 2)
+        self.pieces[L_DF] = org[L_UF].rotate(Front, 2)
+        self.pieces[L_DLF] = org[L_URF].rotate(Front, 2)
+        self.pieces[L_LF] = org[L_RF].rotate(Front, 2)
+        self.pieces[L_ULF] = org[L_DRF].rotate(Front, 2)
+        self.pieces[L_UF] = org[L_DF].rotate(Front, 2)
         return
         
     def _f(self, quiet=False):
@@ -418,14 +495,14 @@ class Cube(object):
     def _B2(self, quiet=False):
         if not quiet: print "<B2>"
         org = self.pieces[:]
-        self.pieces[L_URB] = org[L_DLB].rotate(Back).rotate(Back)
-        self.pieces[L_RB] = org[L_LB].rotate(Back).rotate(Back)
-        self.pieces[L_DRB] = org[L_ULB].rotate(Back).rotate(Back)
-        self.pieces[L_DB] = org[L_UB].rotate(Back).rotate(Back)
-        self.pieces[L_DLB] = org[L_URB].rotate(Back).rotate(Back)
-        self.pieces[L_LB] = org[L_RB].rotate(Back).rotate(Back)
-        self.pieces[L_ULB] = org[L_DRB].rotate(Back).rotate(Back)
-        self.pieces[L_UB] = org[L_DB].rotate(Back).rotate(Back)
+        self.pieces[L_URB] = org[L_DLB].rotate(Back, 2)
+        self.pieces[L_RB] = org[L_LB].rotate(Back, 2)
+        self.pieces[L_DRB] = org[L_ULB].rotate(Back, 2)
+        self.pieces[L_DB] = org[L_UB].rotate(Back, 2)
+        self.pieces[L_DLB] = org[L_URB].rotate(Back, 2)
+        self.pieces[L_LB] = org[L_RB].rotate(Back, 2)
+        self.pieces[L_ULB] = org[L_DRB].rotate(Back, 2)
+        self.pieces[L_UB] = org[L_DB].rotate(Back, 2)
         return
     
     def _M(self, quiet=False):
@@ -457,14 +534,14 @@ class Cube(object):
     def _M2(self, quiet=False):
         if not quiet: print "<M2>"
         org = self.pieces[:]
-        self.pieces[L_UB] = org[L_DF].rotate(Left).rotate(Left)
-        self.pieces[L_U] = org[L_D].rotate(Left).rotate(Left)
-        self.pieces[L_UF] = org[L_DB].rotate(Left).rotate(Left)
-        self.pieces[L_F] = org[L_B].rotate(Left).rotate(Left)
-        self.pieces[L_DF] = org[L_UB].rotate(Left).rotate(Left)
-        self.pieces[L_D] = org[L_U].rotate(Left).rotate(Left)
-        self.pieces[L_DB] = org[L_UF].rotate(Left).rotate(Left)
-        self.pieces[L_B] = org[L_F].rotate(Left).rotate(Left)
+        self.pieces[L_UB] = org[L_DF].rotate(Left, 2)
+        self.pieces[L_U] = org[L_D].rotate(Left, 2)
+        self.pieces[L_UF] = org[L_DB].rotate(Left, 2)
+        self.pieces[L_F] = org[L_B].rotate(Left, 2)
+        self.pieces[L_DF] = org[L_UB].rotate(Left, 2)
+        self.pieces[L_D] = org[L_U].rotate(Left, 2)
+        self.pieces[L_DB] = org[L_UF].rotate(Left, 2)
+        self.pieces[L_B] = org[L_F].rotate(Left, 2)
         return
         
     def _E(self, quiet=False):
@@ -496,14 +573,14 @@ class Cube(object):
     def _E2(self, quiet=False):
         if not quiet:print "<E2>"
         org = self.pieces[:]
-        self.pieces[L_LF] = org[L_RB].rotate(Down).rotate(Down)
-        self.pieces[L_F] = org[L_B].rotate(Down).rotate(Down)
-        self.pieces[L_RF] = org[L_LB].rotate(Down).rotate(Down)
-        self.pieces[L_R] = org[L_L].rotate(Down).rotate(Down)
-        self.pieces[L_RB] = org[L_LF].rotate(Down).rotate(Down)
-        self.pieces[L_B] = org[L_F].rotate(Down).rotate(Down)
-        self.pieces[L_LB] = org[L_RF].rotate(Down).rotate(Down)
-        self.pieces[L_L] = org[L_R].rotate(Down).rotate(Down)
+        self.pieces[L_LF] = org[L_RB].rotate(Down, 2)
+        self.pieces[L_F] = org[L_B].rotate(Down, 2)
+        self.pieces[L_RF] = org[L_LB].rotate(Down, 2)
+        self.pieces[L_R] = org[L_L].rotate(Down, 2)
+        self.pieces[L_RB] = org[L_LF].rotate(Down, 2)
+        self.pieces[L_B] = org[L_F].rotate(Down, 2)
+        self.pieces[L_LB] = org[L_RF].rotate(Down, 2)
+        self.pieces[L_L] = org[L_R].rotate(Down, 2)
         return
 
     def _S(self, quiet=False):
@@ -535,14 +612,14 @@ class Cube(object):
     def _S2(self, quiet=False):
         if not quiet: print "<S2>"
         org = self.pieces[:]
-        self.pieces[L_UR] = org[L_DL].rotate(Front).rotate(Front)
-        self.pieces[L_R] = org[L_L].rotate(Front).rotate(Front)
-        self.pieces[L_DR] = org[L_UL].rotate(Front).rotate(Front)
-        self.pieces[L_D] = org[L_U].rotate(Front).rotate(Front)
-        self.pieces[L_DL] = org[L_UR].rotate(Front).rotate(Front)
-        self.pieces[L_L] = org[L_R].rotate(Front).rotate(Front)
-        self.pieces[L_UL] = org[L_DR].rotate(Front).rotate(Front)
-        self.pieces[L_U] = org[L_D].rotate(Front).rotate(Front)
+        self.pieces[L_UR] = org[L_DL].rotate(Front, 2)
+        self.pieces[L_R] = org[L_L].rotate(Front, 2)
+        self.pieces[L_DR] = org[L_UL].rotate(Front, 2)
+        self.pieces[L_D] = org[L_U].rotate(Front, 2)
+        self.pieces[L_DL] = org[L_UR].rotate(Front, 2)
+        self.pieces[L_L] = org[L_R].rotate(Front, 2)
+        self.pieces[L_UL] = org[L_DR].rotate(Front, 2)
+        self.pieces[L_U] = org[L_D].rotate(Front, 2)
         return
         
     def get_colors_on_face(self, face):
@@ -710,7 +787,7 @@ class Cube(object):
             if confirm:
                 raw_input() 
         self.center_colors = tuple([COLOR.index(f[4]) for f in self.show_faces(get_only=True)]) # re-modify
-        self.translation_map = TRANSLATION_MAP[self.center_colors]
+        self.translation_map = TRANSLATION_MAP[ROTATED_CENTER_COLORS.index(self.center_colors)]
         return len(que)
     
     def game(self):

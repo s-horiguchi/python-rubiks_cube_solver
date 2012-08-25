@@ -127,41 +127,74 @@ SINGLE_ROTATE_WAYS = ["R", "L", "U", "D", "F", "B", "M", "E", "S"]
 ENTIRE_ROTATE_WAYS = ["(r)", "(r')", "(r2)", "(f)", "(f')", "(f2)", "(u)", "(u')", "(u2)"]
 ENTIRE_ROTATE_WAYS_simple = ["r", "f", "u"]
 
-TRANSLATION_MAP = { # key: colors of center cube /item: which notation each one in ALL_ROTATE_WAYS translate to
+TRANSLATION_MAP = [ # which notation each one in ALL_ROTATE_WAYS translate to
     # (up, donw) = (WHITE, BLUE)
-    # following is standard
-    (RED, ORANGE, WHITE, BLUE, GREEN, YELLOW):("R", "R'", "R2", "L", "L'", "L2", "U", "U'", "U2", "D", "D'", "D2", "F", "F'", "F2", "B", "B'", "B2", 
-                                               "M", "M'", "M2", "E", "E'", "E2", "S", "S'", "S2", "(r)", "(r')", "(f)", "(f')", "(u)" ,"(u')"),
 
-    (GREEN, YELLOW, WHITE, BLUE, ORANGE, RED):("B", "B'", "B2", "F", "F'", "F2", "U", "U'", "U2", "D", "D'", "D2", "R", "R'", "R2", "L", "L'", "L2",
-                                               "S", "S'", "S2", "E", "E'", "E2", "M'", "M", "M2", "(f')", "(f)", "(r)", "(r')", "(u)", "(u')"),
-    (ORANGE, RED, WHITE, BLUE, YELLOW, GREEN):("L", "L'", "L2", "R", "R'", "R2", "U", "U'", "U2", "D", "D'", "D2", "B", "B'", "B2", "F", "F'", "F2",
-                                               "M'", "M", "M2", "E", "E'", "E2", "S'", "S", "S2", "(r')", "(r)", "(f)", "(f')", "(u')", "(u)"),
-    (YELLOW, GREEN, WHITE, BLUE, RED, ORANGE):("F", "F'", "F2", "B", "B'", "B2", "U", "U'", "U2", "D", "D'", "D2", "L", "L'", "L2", "R", "R'", "R2",
-                                               "S'", "S", "S2", "E", "E'", "E2", "M", "M'", "M2", "(f)", "(f')", "(r')", "(r)", "(u)", "(u')"),
+    ("R", "R'", "R2", "L", "L'", "L2", "U", "U'", "U2", "D", "D'", "D2", "F", "F'", "F2", "B", "B'", "B2", 
+     "M", "M'", "M2", "E", "E'", "E2", "S", "S'", "S2", "(r)", "(r')", "(f)", "(f')", "(u)" ,"(u')"),     # this position is standard
+    ("B", "B'", "B2", "F", "F'", "F2", "U", "U'", "U2", "D", "D'", "D2", "R", "R'", "R2", "L", "L'", "L2",
+     "S", "S'", "S2", "E", "E'", "E2", "M'", "M", "M2", "(f')", "(f)", "(r)", "(r')", "(u)", "(u')"),
+    ("L", "L'", "L2", "R", "R'", "R2", "U", "U'", "U2", "D", "D'", "D2", "B", "B'", "B2", "F", "F'", "F2",
+     "M'", "M", "M2", "E", "E'", "E2", "S'", "S", "S2", "(r')", "(r)", "(f)", "(f')", "(u')", "(u)"),
+    ("F", "F'", "F2", "B", "B'", "B2", "U", "U'", "U2", "D", "D'", "D2", "L", "L'", "L2", "R", "R'", "R2",
+     "S'", "S", "S2", "E", "E'", "E2", "M", "M'", "M2", "(f)", "(f')", "(r')", "(r)", "(u)", "(u')"),
     # (GREEN, YELLOW)
-    (RED, ORANGE, GREEN, YELLOW, BLUE, WHITE):None,
-    (BLUE, WHITE, GREEN, YELLOW, ORANGE, RED):None,
-    (ORANGE, RED, GREEN, YELLOW, WHITE, BLUE):None,
-    (WHITE, BLUE, GREEN, YELLOW, RED, ORANGE):None,
+    None,
+    None,
+    None,
+    None,
     # (BLUE, WHITE)
-    (RED, ORANGE, BLUE, WHITE, YELLOW, GREEN):None,
-    (YELLOW, GREEN, BLUE, WHITE, ORANGE, RED):None,
-    (ORANGE, RED, BLUE, WHITE, GREEN, YELLOW):None,
-    (GREEN, YELLOW, BLUE, WHITE, RED, ORANGE):None,
+    None,
+    None,
+    None,
+    None,
     # (YELLOW, GREEN)
-    (RED, ORANGE, YELLOW, GREEN, WHITE, BLUE):None,
-    (WHITE, BLUE, YELLOW, GREEN, ORANGE, RED):None,
-    (ORANGE, RED, YELLOW, GREEN, BLUE, WHITE):None,
-    (BLUE, WHITE, YELLOW, GREEN, RED, ORANGE):None,
+    None,
+    None,
+    None,
+    None,
     # (RED, ORANGE)
-    (GREEN, YELLOW, RED, ORANGE, WHITE, BLUE):None,
-    (WHITE, BLUE, RED, ORANGE, YELLOW, GREEN):None,
-    (YELLOW, GREEN, RED, ORANGE, BLUE, WHITE):None,
-    (BLUE, WHITE, RED, ORANGE, GREEN, YELLOW):None,
+    None,
+    None,
+    None,
+    None,
     # (ORANGE, RED)
-    (GREEN, YELLOW, ORANGE, RED, BLUE, WHITE):None,
-    (BLUE, WHITE, ORANGE, RED, YELLOW, GREEN):None,
-    (YELLOW, GREEN, ORANGE, RED, WHITE, BLUE):None,
-    (WHITE, BLUE, ORANGE, RED, GREEN, YELLOW):None,
-    }
+    None,
+    None,
+    None,
+    None,
+    ]
+
+ROTATED_CENTER_COLORS = [
+    # colors of center of the cube
+    # (up, donw) = (WHITE, BLUE)
+    (RED, ORANGE, WHITE, BLUE, GREEN, YELLOW), #0 # this is standard position
+    (GREEN, YELLOW, WHITE, BLUE, ORANGE, RED), #1
+    (ORANGE, RED, WHITE, BLUE, YELLOW, GREEN), #2
+    (YELLOW, GREEN, WHITE, BLUE, RED, ORANGE), #3
+    # (GREEN, YELLOW)
+    (RED, ORANGE, GREEN, YELLOW, BLUE, WHITE), #4
+    (BLUE, WHITE, GREEN, YELLOW, ORANGE, RED), #5
+    (ORANGE, RED, GREEN, YELLOW, WHITE, BLUE), #6
+    (WHITE, BLUE, GREEN, YELLOW, RED, ORANGE), #7
+    # (BLUE, WHITE)
+    (RED, ORANGE, BLUE, WHITE, YELLOW, GREEN), #8
+    (YELLOW, GREEN, BLUE, WHITE, ORANGE, RED), #9
+    (ORANGE, RED, BLUE, WHITE, GREEN, YELLOW), #10
+    (GREEN, YELLOW, BLUE, WHITE, RED, ORANGE), #11
+    # (YELLOW, GREEN)
+    (RED, ORANGE, YELLOW, GREEN, WHITE, BLUE), #12
+    (WHITE, BLUE, YELLOW, GREEN, ORANGE, RED), #13
+    (ORANGE, RED, YELLOW, GREEN, BLUE, WHITE), #14
+    (BLUE, WHITE, YELLOW, GREEN, RED, ORANGE), #15
+    # (RED, ORANGE)
+    (GREEN, YELLOW, RED, ORANGE, WHITE, BLUE), #16
+    (WHITE, BLUE, RED, ORANGE, YELLOW, GREEN), #17
+    (YELLOW, GREEN, RED, ORANGE, BLUE, WHITE), #18
+    (BLUE, WHITE, RED, ORANGE, GREEN, YELLOW), #19
+    # (ORANGE, RED)
+    (GREEN, YELLOW, ORANGE, RED, BLUE, WHITE), #20
+    (BLUE, WHITE, ORANGE, RED, YELLOW, GREEN), #21
+    (YELLOW, GREEN, ORANGE, RED, WHITE, BLUE), #22
+    (WHITE, BLUE, ORANGE, RED, GREEN, YELLOW), #23
+    ]

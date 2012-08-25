@@ -118,6 +118,6 @@ __完成状態に近い手順から順に登録する。__
             return "<BeforeAfter(solu=%d, before_pos=%d, after_pos=%d)>" % (self.solution_id, self.before_position_id, self.after_position_id)
 ```
 ## ToDo ##
- - 回転体
-
+ - 回転体 TRANSLATION_MAPの完成
+ - solution の短縮　（ex. "L'"+"L2" = "L")
  - グラフィック
