@@ -71,8 +71,8 @@ scramble -> batch -> game
 `"U", "U'", "U2", "D", "D'", "D2", "E", "E'", "E2", "(u)", "(u')"`  
 といった回転記号が現れないように解を最適化するモードです。
 
-解の探索には、Herbert Kociemba氏の公開してくださっている_twophase.jar_というJavaのパッケージを利用しています。  
-[ここ](http://kociemba.org/cube.htm)の_Download_からダウンロードできます。
+解の探索には、Herbert Kociemba氏の公開してくださっている`twophase.jar`というJavaのパッケージを利用しています。  
+[ここ](http://kociemba.org/cube.htm)の`Download`からダウンロードできます。
 
 ## ToDo ##
  - 解の最適化("NOMAL"も"ROBOT"も)
