@@ -11,7 +11,7 @@ python-rubiks\_cube\_solver
  - solver.py
    - twophase.jar
 
-からなる。レポジトリ名に_python_とありますが、Javaのライブラリを使うことになったので[_Jython_](http://www.jython.org/)でのみ動きます。
+からなる。レポジトリ名に__python__とありますが、Javaのライブラリを使うことになったので[__Jython__](http://www.jython.org/)でのみ動きます。
 回転記号を使っているので[ここ](http://www.planet-puzzle.com/cubekaiten.html)と[ここ](http://www.planet-puzzle.com/cube-shift.html)を参照してください。
 
 ### cube.py ###
@@ -63,7 +63,7 @@ scramble -> batch -> game
 `R`は赤色、`O`はオレンジ色、`W`は白色、`B`は青色、`G`は緑色、`Y`は黄色を表し、  
 右、左、上、下、前、後の順に`|`で区切って各面を指定する。  
 それぞれの面は、左上、上、右上、左、真ん中、右、左下、下、右下の順に並べる。  
-![展開図](https://github.com/pheehs/python-rubiks_cube_solver/raw/master/tenkai-zu.jpg "展開図")
+![展開図](https://github.com/pheehs/python-rubiks_cube_solver/raw/master/tenkai-zu.jpg "展開図")  
 (注：色の配色は日本国内で販売されているのメガハウス社製のキューブのもの）
 
 `ROBOT`モードとは、ルービックキューブソルバーロボットに解を渡す時のオプションで、  
@@ -72,7 +72,7 @@ scramble -> batch -> game
 といった回転記号が現れないように解を最適化するモードです。
 
 解の探索には、Herbert Kociemba氏の公開してくださっている_twophase.jar_というJavaのパッケージを利用しています。  
-![ここ](http://kociemba.org/cube.htm)の_Download_からダウンロードできます。
+[ここ](http://kociemba.org/cube.htm)の_Download_からダウンロードできます。
 
 ## ToDo ##
  - 解の最適化("NOMAL"も"ROBOT"も)
