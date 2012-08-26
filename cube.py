@@ -103,6 +103,19 @@ class Cube(object):
         self.run(batch, False)
         return
 
+    def facelets(self, standard=False):
+        ret = ""
+        if standard:
+            center_colors = self.center_colors
+        else:
+            center_colors = [RED, ORANGE, WHITE, BLUE, GREEN, YELLOW]
+            
+        for i in [2, 0, 4, 3, 1, 5]: # (U, R, F, D, L, B)
+            colors = [FACELETS[center_colors.index(c)] for c in self.get_colors_on_face(i)]
+            ret += "".join(colors)
+        return ret
+
+
     def set_by_faces_color(self, colors, quiet=False):
         # colors = [ <faces list> [ <colors list> RED, ...], ...]
         self.pieces = []
@@ -695,7 +708,7 @@ class Cube(object):
         if standard:
             center_colors = self.center_colors
         else:
-            center_colors = (RED, ORANGE, WHITE, BLUE, GREEN, YELLOW)
+            center_colors = [RED, ORANGE, WHITE, BLUE, GREEN, YELLOW]
             
         for i in range(6):
             colors = [center_colors.index(c) for c in self.get_colors_on_face(i)]

@@ -25,6 +25,7 @@ BLUE = 3 #O
 GREEN = 4  #G
 YELLOW = 5  #W
 COLOR = ["R", "O", "W", "B", "G", "Y", "D", "U", "N"]
+FACELETS = ["R", "L", "U", "D", "F", "B"]
 
 Right = 0
 Left = 1
