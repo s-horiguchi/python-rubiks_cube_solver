@@ -63,7 +63,7 @@ scramble -> batch -> game
 `R`は赤色、`O`はオレンジ色、`W`は白色、`B`は青色、`G`は緑色、`Y`は黄色を表し、  
 右、左、上、下、前、後の順に`|`で区切って各面を指定する。  
 それぞれの面は、左上、上、右上、左、真ん中、右、左下、下、右下の順に並べる。  
-![展開図](https://github.com/pheehs/python-rubiks_cube_solver/raw/master/tenkai-zu.jpg "展開図")  
+![展開図](https://github.com/pheehs/python-rubiks_cube_solver/raw/twophase/tenkai-zu.jpg "展開図")  
 (注：色の配色は日本国内で販売されているのメガハウス社製のキューブのもの）
 
 `ROBOT`モードとは、ルービックキューブソルバーロボットに解を渡す時のオプションで、  
