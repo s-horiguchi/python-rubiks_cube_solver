@@ -9,7 +9,7 @@ python-rubiks\_cube\_solver
  - cube_def.py
    - 定数とかもろもろの定義
  - solver.py
-   - twophase.jar
+   - `twophase.jar`と`optiqtm`で解を探す。
 
 からなる。レポジトリ名に__python__とありますが、Javaのライブラリを使うことになったので[__Jython__](http://www.jython.org/)でのみ動きます。
 回転記号を使っているので[ここ](http://www.planet-puzzle.com/cubekaiten.html)と[ここ](http://www.planet-puzzle.com/cube-shift.html)を参照してください。
@@ -71,10 +71,8 @@ scramble -> batch -> game
 `"U", "U'", "U2", "D", "D'", "D2", "E", "E'", "E2", "(u)", "(u')"`  
 といった回転記号が現れないように解を最適化するモードです。
 
-解の探索には、Herbert Kociemba氏の公開してくださっている`twophase.jar`というJavaのパッケージを利用しています。  
-[ここ](http://kociemba.org/cube.htm)の`Download`からダウンロードできます。
+解の探索には、`twophase.jar`というJavaのパッケージ、解の最適化には`optiqtm`という実行ファイルをそのまま呼び出しています。  
+どちらもHerbert Kociemba氏が[ここ](http://kociemba.org/cube.htm)の`Download`で公開してくださっています。
 
 ## ToDo ##
- - 解の最適化("NOMAL"も"ROBOT"も)
- - solution の最適化
  - グラフィック

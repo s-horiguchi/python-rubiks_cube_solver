@@ -81,7 +81,7 @@ class Cube(object):
         else:
             self.set_str_position(str_position)
         self.debug = debug
-        self.center_colors = tuple([COLOR.index(f[4]) for f in self.show_faces(get_only=True)])
+        self.center_colors = [COLOR.index(f[4]) for f in self.show_faces(get_only=True)]
         self.translation_map = TRANSLATION_MAP[ROTATED_CENTER_COLORS.index(self.center_colors)]
 
 #    def get_standard_color_output(self):
@@ -89,7 +89,7 @@ class Cube(object):
 
     def init(self):
         self.pieces = [Piece(i) for i in range(26)]
-        self.center_colors = tuple([COLOR.index(f[4]) for f in self.show_faces(get_only=True)])
+        self.center_colors = [COLOR.index(f[4]) for f in self.show_faces(get_only=True)]
         self.translation_map = TRANSLATION_MAP[ROTATED_CENTER_COLORS.index(self.center_colors)]
         return
 
@@ -105,7 +105,7 @@ class Cube(object):
 
     def facelets(self, standard=False):
         ret = ""
-        if standard:
+        if not standard:
             center_colors = self.center_colors
         else:
             center_colors = [RED, ORANGE, WHITE, BLUE, GREEN, YELLOW]
@@ -144,7 +144,7 @@ class Cube(object):
         if standard:
             center_colors = self.center_colors
         else:
-            center_colors = (RED, ORANGE, WHITE, BLUE, GREEN, YELLOW)
+            center_colors = [RED, ORANGE, WHITE, BLUE, GREEN, YELLOW]
         return "|".join([",".join([str(c) for c in p.export(center_colors)]) for p in self.pieces])
 
     def get_piece_location(self, piece_num):
@@ -799,7 +799,7 @@ class Cube(object):
             if self.debug: self.show_faces()
             if confirm:
                 raw_input() 
-        self.center_colors = tuple([COLOR.index(f[4]) for f in self.show_faces(get_only=True)]) # re-modify
+        self.center_colors = [COLOR.index(f[4]) for f in self.show_faces(get_only=True)] # re-modify
         self.translation_map = TRANSLATION_MAP[ROTATED_CENTER_COLORS.index(self.center_colors)]
         return len(que)
     
