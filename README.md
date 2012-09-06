@@ -10,8 +10,12 @@ python-rubiks\_cube\_solver
    - 定数とかもろもろの定義
  - solver.py
    - `twophase.jar`と`optiqtm`で解を探す。
+ - cube_capture.py
+   - カメラからキューブの色認識
+ - robot_commu.py
+   - ロボットとソフトウェアをつなぐ。ロボットとはシリアル通信。
 
-からなる。レポジトリ名に__python__とありますが、Javaのライブラリを使うことになったので[__Jython__](http://www.jython.org/)でのみ動きます。
+からなる。`solver.py`以外はPythonで動きますが、Javaのライブラリを使う`solver.py`と`solver.py`を呼び出す`robot_commu.py`には[__Jython__](http://www.jython.org/)が必要です。
 回転記号を使っているので[ここ](http://www.planet-puzzle.com/cubekaiten.html)と[ここ](http://www.planet-puzzle.com/cube-shift.html)を参照してください。
 
 ### cube.py ###
@@ -74,5 +78,35 @@ scramble -> batch -> game
 解の探索には、`twophase.jar`というJavaのパッケージ、解の最適化には`optiqtm`という実行ファイルをそのまま呼び出しています。  
 どちらもHerbert Kociemba氏が[ここ](http://kociemba.org/cube.htm)の`Download`で公開してくださっています。
 
+### robot_commu.py ###
+コイツ自体は**Python**で動きますが、`solver.py`を呼び出すので**Jython**が必要です。
+
+    $ python robot_commu.py
+    Usage: ./robot_commu.py [options] [DEVICE_NAME]
+    
+    Options:
+      -h, --help            show this help message and exit
+      -e, --enum_device     enumerate and select device name (ignore DEVICE_NAME)
+      -d, --debug           enable debug mode(withoout robot)
+      -o FILEPATH, --dump_file=FILEPATH
+                            specify dump file of serial simulation for
+                            debug(default is "serial.log")
+
+`DEVICE_NAME`にロボットに搭載したマイコンのシリアル通信用デバイスファイルorCOMポート名を指定してください。
+
+ * -e, --enum_device
+   * `/dev/tty.*`を検索して選べるので、`DEVICE_NAME`を指定する必要はありません。
+ * -d, --debug
+   * マイコンとつながないでテストする用です。デフォルトで`serial.log`に送信するコマンドをダンプします。
+ * -o FILEPATH, --dump_file=FILEPATH
+   * デバッグ時にダンプするファイルを変更できます。
+   
+1. まず`cube_capture.py`でキューブの色を認識し、
+2. それを`solver.py`に渡し、
+3. その結果をマイコンに送って解かせる。
+
+だいたいこんな感じで処理が進みます。
+
 ## ToDo ##
+ - cube_capture.pyの精度向上
  - グラフィック

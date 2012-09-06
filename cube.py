@@ -93,14 +93,13 @@ class Cube(object):
         self.translation_map = TRANSLATION_MAP[ROTATED_CENTER_COLORS.index(self.center_colors)]
         return
 
-    def scramble(self, nmoves=None):
-        if not nmoves: nmoves = NUM_SCRAMBLE_MOVES
+    def scramble(self, nmoves=NUM_SCRAMBLE_MOVES):
         assert type(nmoves) == int, "type error of the number of scramble moves"  #
         batch = ""
         for i in xrange(nmoves):
             batch += random.choice(ROTATE_WAYS)
-        if self.debug: print "[*] batch =", batch
-        self.run(batch, False)
+        print "[*] scramble batch =", batch
+        self.run(batch, quiet=True)
         return
 
     def facelets(self, standard=False):
