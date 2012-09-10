@@ -16,10 +16,13 @@ python-rubiks\_cube\_solver
    - ロボットとソフトウェアをつなぐ。ロボットとはシリアル通信。
 
 からなる。`solver.py`以外はPythonで動きますが、Javaのライブラリを使う`solver.py`と`solver.py`を呼び出す`robot_commu.py`には[__Jython__](http://www.jython.org/)が必要です。
-回転記号を使っているので[ここ](http://www.planet-puzzle.com/cubekaiten.html)と[ここ](http://www.planet-puzzle.com/cube-shift.html)を参照してください。
+回転記号を使っているので[ここ](http://www.planet-puzzle.com/cubekaiten.html)と[ここ](http://www.planet-puzzle.com/cube-shift.html)を参照してください。  
+全体のつながりを図に表すと以下のようになります。  
+![関係図](https://github.com/pheehs/python-rubiks_cube_solver/raw/twophase/relationship.png "関係図")  
 
 ### cube.py ###
-    > python cube.py -h
+
+    $ python cube.py -h
     Usage: cube.py [options] arg  
     
     Options:  
@@ -77,6 +80,29 @@ scramble -> batch -> game
 
 解の探索には、`twophase.jar`というJavaのパッケージ、解の最適化には`optiqtm`という実行ファイルをそのまま呼び出しています。  
 どちらもHerbert Kociemba氏が[ここ](http://kociemba.org/cube.htm)の`Download`で公開してくださっています。
+
+### cube_capture.py ###
+OpenCVがJythonでは動かないので**Python**で動かします。
+
+    $ python cube_capture.py --help
+    Usage: ./cube_capture.py [options]
+    
+    Options:
+      -h, --help  show this help message and exit
+
+今のところ特にオプション無し。
+RGB方式の代わりにHSV方式を使ってキューブのステッカーの色を認識します。
+HSV方式・・・ 色相(Hue)/彩度(Saturation)/明度(Value)
+ * 色相　・・・　色の種類を表す。
+   * 似た色を隣合うように並べると円環状になるので、基準の色相からの角度で表せる。
+ * 彩度　・・・　色の鮮やかさを表す。
+   * 鮮やかな色ほど高く、白や灰、黒は低い
+ * 明度　・・・　色の明るさを表す。
+   * 黒は明度が最小、明るくなり白に近づくほど大きくなる
+
+「赤」と「黒っぽく濁った赤」「白っぽく濁った赤」を見比べてわかるんですが、同じ赤であれば色相は近くなります。この色相の性質を利用することで、多少の光のあたり具合の変化があっても色を認識できるようになります。
+と、ここで気づいた方もいるかも知れませんが、「黒」「灰」「白」の色相は「0~1」となっています。これはどんな値も取りうるという意味で、彩度の低いあるいは明度が極端に小さい場合は色相はほぼ関係なくなります。すると、色相だけを見て色を判断したのでは白色が何色になるかわかりません。
+そこで、彩度がある程度低く、明度がある程度高い場合は色相で色を判断する前に「白」であると認識させます。
 
 ### robot_commu.py ###
 コイツ自体は**Python**で動きますが、`solver.py`を呼び出すので**Jython**が必要です。
