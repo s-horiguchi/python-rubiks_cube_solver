@@ -28,24 +28,15 @@ class SolverRobot(object):
                 self.enum_select_device()
                 
             self.port = Serial(port, 9600)
-
-        
-    def _next_face(_self, self):
-        print "[*] called _next_face()"
-        for maneu in ["(r)", "(f')", "(f')", "(f')", "(f')(r)"]: #up, front, right, back, left, bottom
-            self.send_command(MANEUVER, maneu)
-            yield True
-        yield False # stop looping
-
+      
     def capture_cube(self):
         print "-------- starting cube_capture.py ......"
-        cc = CubeCapture(without_robot=self.without_robot, next_face=(self._next_face, self))
+        cc = CubeCapture(without_robot=self.without_robot, next_face=self)
         
         colors_str = cc.main()
         print "-------- finished cube_capture.py !"
         if not colors_str:
-            raise Exception "cube_capture.py failed or quit"
-        self.send_command(MANEUVER, "(r)(r)")
+            raise Exception, "cube_capture.py failed or quit"
         
         return colors_str
 

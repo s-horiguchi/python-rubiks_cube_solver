@@ -134,5 +134,4 @@ HSV方式・・・ 色相(Hue)/彩度(Saturation)/明度(Value)
 だいたいこんな感じで処理が進みます。
 
 ## ToDo ##
- - cube_capture.pyの精度向上
  - グラフィック

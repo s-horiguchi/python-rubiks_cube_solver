@@ -12,6 +12,9 @@ WHITE_S_MIN = 20
 WHITE_V_MAX = 170
 WHITE_THRESH = 20
 
+MANEUVER = 0x70
+CHANGE_FACE_MANEU  = ["(r)", "(f')", "(f')", "(f')", "(f')(r)", "(r)(r)"] #up, front, right, back, left, bottom
+
 class CubeCapture(object):
     def __init__(self, without_robot=True, next_face=None):
         self.without_robot = without_robot
@@ -37,13 +40,8 @@ class CubeCapture(object):
         self.facenum = 0
         self.colors = [[0,0,0], [0,0,0], [0,0,0]]
 
-        if next_face:
-            self.next_face = next_face
-        else:
-            def nop():
-                return
-            self.next_face = (nop, None)
-
+        self.solver = next_face
+        self.counter = 0
         #print "one_side:", self.one_side
         #print "W", self.W
         #print "H", self.H
@@ -51,8 +49,9 @@ class CubeCapture(object):
 
     def save_color(self):
         self.colors_list[self.facenum] = deepcopy(self.colors)
+        # change capturing face of the cube
+        self.solver.send_command(MANEUVER, CHANGE_FACE_MANEU[self.facenum])
         self.facenum += 1
-        self.next_face[0](self.next_face[1])
         if not self.without_robot: # re-set
             self.timer = Timer(self.save_color, ROTATE_DELAY)
             self.timer.start()
