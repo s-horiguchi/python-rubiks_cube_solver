@@ -25,9 +25,10 @@ class SolverRobot(object):
             self.port = open(dump_file, "wb")
         else:
             if not port:
-                self.enum_select_device()
+                port = self.enum_select_device()
                 
-            self.port = Serial(port, 9600)
+            self.port = Serial(port, 9600, timeout=10)
+            print self.port
       
     def capture_cube(self):
         print "-------- starting cube_capture.py ......"
@@ -56,42 +57,47 @@ class SolverRobot(object):
     def send_command(self, code, arg=""):
         packet = "$LL%c%s\n" % (chr(code), arg)
         packet = packet.replace("LL", chr(len(packet)%256) + chr(len(packet)/256))
-        #print "--------\n" + packet + "\n--------"
+        print "--------\n" + "".join(["\\x%02x" % ord(c) for c in packet]) + "\n--------"
         self.port.write(packet)
         if self.without_robot: # for debug
             print "[*] called send_command(0x%x, %s)" % (code, arg)
             print "[*] writing to the dump file..."
             return len(packet)
-        recv = self.port.read(4)
-        if recv == "#\x00\x04%c\n" % chr(code+0x80):
-            return len(packet)
-        else:
-            raise IOError, "Robot didn't reply correct data!"
+        #print self.port
+        #recv = self.port.readline()
+        #print "".join(["\\x%02x" % ord(c) for c in recv])
+        #if recv == "#\x00\x04%c\n" % chr(code+0x80):
+        #    return len(packet)
+        #else:
+        #    raise IOError, "Robot didn't reply correct data!"
         
     def recv_command(self, code):
         if self.without_robot:
             print "[*] called recv_command(0x%x)" % (code)
             return
-        recv = self.port.read(4)
-        if recv == "#\x00\x04%c\n" % chr(code+0x80):
-            packet = "$LL%c\n" % chr(code)
-            packet = packet.replace("LL", chr(len(packet)%256) + chr(len(packet)/256))
-            self.port.write(packet)
-            return len(recv)
-        else:
-            raise IOError, "Robot sent unexpected data!"
+        #recv = self.port.read(5)
+        #if recv == "#\x00\x04%c\n" % chr(code+0x80):
+        #    packet = "$LL%c\n" % chr(code)
+        #    packet = packet.replace("LL", chr(len(packet)%256) + chr(len(packet)/256))
+        #    self.port.write(packet)
+        #    return len(recv)
+        #else:
+        #    raise IOError, "Robot sent unexpected data!"
         
     def main(self):
         self.send_command(START_CAPTURE)
+        time.sleep(1) ##
         colors = self.capture_cube()
         self.send_command(FINISH_CAPTURE)
+        time.sleep(1) ##
         print "captured colors:", colors
         
         r = self.solve(colors)
         
         self.send_command(START_SOLVING)
+        time.sleep(1)
         self.send_command(MANEUVER, r)
-        self.recv_command(FINISH_MANEUVER)
+        #self.recv_command(FINISH_MANEUVER)
         
         self.port.close()
         return
@@ -101,17 +107,17 @@ class SolverRobot(object):
         counter = 1
         for dname in os.listdir("/dev/"):
             if dname.startswith("tty."):
-                devlist.append(dname)
-                print "%d. %s" % (counter, dname)
+                devlist.append("/dev/"+dname)
+                print "%d. /dev/%s" % (counter, dname)
                 counter += 1
         dnum_str = raw_input("device number >")
         try:
             dnum = int(dnum_str)
-            self.devname = devlist[dnum-1]
+            devname = devlist[dnum-1]
         except:
             raise ValueError, "Please enter valid device number!"
         else:
-            return self.devname
+            return devname
 
 
 if __name__ == "__main__":

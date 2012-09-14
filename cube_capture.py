@@ -3,7 +3,7 @@
 
 import cv2.cv as cv
 from copy import deepcopy
-from threading import Timer
+import time
 from cube_def import *
 
 SRATE = 2
@@ -30,10 +30,10 @@ class CubeCapture(object):
         self.img = cv.CreateImage((self.W, self.H), 8, 3)
         self.hsv = cv.CreateImage((self.W, self.H), 8, 3)
         if self.W >= self.H:
-            self.one_side = self.H / 11. # the length of one side of the sqare of one sticker
+            self.one_side = self.H / 9 * 2. # the length of one side of the sqare of one sticker
         else:
-            self.one_side = self.W / 11.
-        self.left_top = ((self.W-11*self.one_side)/2+3*self.one_side, (self.H-11*self.one_side)/2+3*self.one_side)
+            self.one_side = self.W / 9 * 2.
+        self.left_top = ((self.W-9/2*self.one_side)/2+self.one_side/4, (self.H-9/2*self.one_side)/2+self.one_side/4)
         
         self.colors_list = [None]*6
         self.fnum_list = [[[None, None, None],[None, None, None],[None, None, None]],[[None, None, None],[None, None, None],[None, None, None]],[[None, None, None],[None, None, None],[None, None, None]],[[None, None, None],[None, None, None],[None, None, None]],[[None, None, None],[None, None, None],[None, None, None]],[[None, None, None],[None, None, None],[None, None, None]]]
@@ -53,8 +53,7 @@ class CubeCapture(object):
         self.solver.send_command(MANEUVER, CHANGE_FACE_MANEU[self.facenum])
         self.facenum += 1
         if not self.without_robot: # re-set
-            self.timer = Timer(self.save_color, ROTATE_DELAY)
-            self.timer.start()
+            self.last_time = time.time()
 
         return
 
@@ -80,11 +79,12 @@ class CubeCapture(object):
 
     def main(self):
         if not self.without_robot:
-            self.timer = Timer(self.save_color, ROTATE_DELAY)
-            self.timer.start()
+            self.last_time = time.time()
         print "[!!] capture white face first"
         
         while self.facenum < 6:
+            if not self.without_robot and (time.time() - self.last_time > ROTATE_DELAY):
+                self.save_color()
             frame = cv.QueryFrame( self.capture )
             if not frame:
                 raise IOError, "Camera Error"
@@ -94,8 +94,8 @@ class CubeCapture(object):
             
             for iy in xrange(3):
                 for ix in xrange(3):
-                    lefttop = (int(self.left_top[0]+self.one_side*2*ix), int(self.left_top[1]+self.one_side*2*iy))
-                    rightbottom = (int(self.left_top[0]+self.one_side*2*ix+self.one_side), int(self.left_top[1]+self.one_side*2*iy+self.one_side))
+                    lefttop = (int(self.left_top[0]+self.one_side*3/2*ix), int(self.left_top[1]+self.one_side*3/2*iy))
+                    rightbottom = (int(self.left_top[0]+self.one_side*3/2*ix+self.one_side), int(self.left_top[1]+self.one_side*3/2*iy+self.one_side))
                     
                     col = cv.Avg(self.img[lefttop[1]:rightbottom[1],lefttop[0]:rightbottom[0]])
                     cv.Rectangle(self.img, lefttop, rightbottom, (0,0,0), cv.CV_FILLED)
@@ -112,8 +112,6 @@ class CubeCapture(object):
             elif self.without_robot and chr(c) == " ":
                 self.save_color()
         #print self.colors_list
-        if not self.without_robot:
-            self.timer.cancel()
         if self.colors_list[-1]:
             r = self.process_colors()
         else:
